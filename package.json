@@ -1,0 +1,13 @@
+{
+  "name": "my-study-hud-root",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "uv run --directory backend uvicorn app.main:app --reload --port 8000",
+    "dev:tauri": "npm --prefix frontend run tauri dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
