@@ -4,6 +4,16 @@ version = "0.1.0"
 description = "Minimal FastAPI RAG scaffold"
 requires-python = ">=3.11"
 dependencies = [
-  "fastapi>=0.115.0",
-  "uvicorn[standard]>=0.30.0"
+  "chromadb>=1.5.9",
+  "fastapi[standard]>=0.115.0",
+  "langchain-text-splitters>=1.1.2",
+  "pdfplumber>=0.11.10",
+  "pillow>=12.3.0",
+  "pydantic>=2.13.4",
+  "pymupdf>=1.28.0",
+  "pytesseract>=0.3.13",
+  "python-dotenv>=1.2.2",
+  "python-pptx>=1.0.2",
+  "sentence-transformers>=5.6.1",
+  "uvicorn[standard]>=0.30.0",
 ]
