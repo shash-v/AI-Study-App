@@ -110,3 +110,15 @@ def extract_text_from_web(url):
     text = soup.get_text()
     return text
 
+
+def extract_text_from_pptx(file_path: str) -> list[str]:
+    """Extracts text slide by slide from PowerPoint files."""
+    prs = Presentation(file_path)
+    slides_text = []
+    for slide in prs.slides:
+        slide_text = []
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                slide_text.append(shape.text)
+        slides_text.append("\n".join(slide_text))
+    return slides_text

@@ -8,6 +8,7 @@ dependencies = [
   "chromadb>=1.5.9",
   "easyocr>=1.7.2",
   "fastapi[standard]>=0.115.0",
+  "google-genai>=2.17.0",
   "langchain-text-splitters>=1.1.2",
   "pdfplumber>=0.11.10",
   "pillow>=12.3.0",
