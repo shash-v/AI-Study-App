@@ -1,15 +1,15 @@
 import math
 import os
+import uuid
 from typing import Any, List, Optional
-
-from app.services.vector_store import embed_sentences
 
 import chromadb
 
+from app.services.vector_store import embed_sentences
 
 
 class EmbeddingStore:
-    """Simple embedding store with an in-memory fallback and optional ChromaDB persistence."""
+    """Embedding store wrapped around ChromaDB with an in-memory list fallback."""
 
     def __init__(self, collection_name: str = "study-assistant", persist_directory: Optional[str] = None):
         self.collection_name = collection_name
@@ -19,12 +19,14 @@ class EmbeddingStore:
         self._items: List[dict[str, Any]] = []
         self._collection = None
 
-        if chromadb is not None:
-            try:
-                self._client = chromadb.PersistentClient(path=self.persist_directory)
-                self._collection = self._client.get_or_create_collection(name=self.collection_name)
-            except Exception:
-                self._collection = None
+        # Attempt persistent storage with ChromaDB
+        try:
+            self._client = chromadb.PersistentClient(path=self.persist_directory)
+            self._collection = self._client.get_or_create_collection(name=self.collection_name)
+        except Exception as e:
+            # Fall back to in-memory store if ChromaDB initialization fails
+            print(f"Warning: Could not initialize ChromaDB ({e}). Falling back to in-memory store.")
+            self._collection = None
 
     def add_embeddings(
         self,
@@ -36,14 +38,16 @@ class EmbeddingStore:
         if len(texts) != len(embeddings):
             raise ValueError("texts and embeddings must be the same length")
 
+        # FIX 1: Generate unique UUIDs if IDs are not provided to avoid key collisions
         if ids is None:
-            ids = [str(i) for i in range(len(texts))]
+            ids = [str(uuid.uuid4()) for _ in texts]
 
         if metadatas is None:
-            metadatas = [{"source": "test"} for _ in texts]
+            metadatas = [{"source": "study-assistant"} for _ in texts]
         else:
-            metadatas = [metadata or {"source": "test"} for metadata in metadatas]
+            metadatas = [metadata or {"source": "study-assistant"} for metadata in metadatas]
 
+        # Use ChromaDB if active
         if self._collection is not None:
             self._collection.add(
                 documents=texts,
@@ -53,13 +57,14 @@ class EmbeddingStore:
             )
             return ids
 
+        # In-memory fallback
         for text, embedding, item_id, metadata in zip(texts, embeddings, ids, metadatas):
             self._items.append(
                 {
                     "id": item_id,
                     "text": text,
                     "embedding": embedding,
-                    "metadata": metadata or {},
+                    "metadata": metadata,
                 }
             )
         return ids
@@ -85,6 +90,7 @@ class EmbeddingStore:
                 )
             ]
 
+        # In-memory similarity computation
         scored_items = []
         for item in self._items:
             score = cosine_similarity(query_embedding, item["embedding"])
@@ -96,7 +102,7 @@ class EmbeddingStore:
                 "id": item["id"],
                 "text": item["text"],
                 "metadata": item["metadata"],
-                "distance": 1 - score,
+                "distance": 1.0 - score,
             }
             for score, item in scored_items[:n_results]
         ]
@@ -122,15 +128,31 @@ class EmbeddingStore:
             self._collection.delete(ids=item_ids)
             return
 
-        self._items = [item for item in self._items if item["id"] not in set(item_ids)]
+        item_ids_set = set(item_ids)
+        self._items = [item for item in self._items if item["id"] not in item_ids_set]
 
-    def add_texts(self, texts: List[str], ids: Optional[List[str]] = None, metadatas: Optional[List[dict[str, Any]]] = None) -> List[str]:
-        embeddings = embed_sentences(texts)
-        return self.add_embeddings(texts=texts, embeddings=embeddings.tolist(), ids=ids, metadatas=metadatas)
+    def add_texts(
+        self,
+        texts: List[str],
+        ids: Optional[List[str]] = None,
+        metadatas: Optional[List[dict[str, Any]]] = None,
+    ) -> List[str]:
+        raw_embeddings = embed_sentences(texts)
+        
+        # FIX 2: Safely handle both numpy arrays and standard lists
+        if hasattr(raw_embeddings, "tolist"):
+            embeddings_list = raw_embeddings.tolist()
+        else:
+            embeddings_list = raw_embeddings
+
+        return self.add_embeddings(
+            texts=texts,
+            embeddings=embeddings_list,
+            ids=ids,
+            metadatas=metadatas,
+        )
 
 
-
-# Computing the similarity between two embeddings using cosine similarity.
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     if len(a) != len(b):
         raise ValueError("embeddings must have the same length")
@@ -145,4 +167,3 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
 
 def create_store(collection_name: str = "study-assistant") -> EmbeddingStore:
     return EmbeddingStore(collection_name=collection_name)
-
