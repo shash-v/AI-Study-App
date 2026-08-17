@@ -1,15 +1,22 @@
-from fastapi import FastAPI
-from app.api.endpoints import router as api_router
+from fastapi import APIRouter
 
-app = FastAPI(title="Study HUD API")
+from app.services.retrieval import LangChainRetriever
 
-# Register the routes from endpoints.py under the "/api" prefix
-app.include_router(api_router, prefix="/api")
+router = APIRouter()
 
-@app.get("/")
+
+@router.get("/")
 def read_root():
     return {"message": "Study HUD API is running!"}
 
-@app.get("/health")
+
+@router.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@router.post("/search")
+def search_documents(query: str):
+    retriever = LangChainRetriever()
+    results = retriever.search(query, k=5)
+    return {"query": query, "results": [doc.page_content for doc in results]}

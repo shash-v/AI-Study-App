@@ -4,18 +4,26 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from langchain_community.vectorstores import FAISS
+from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
 from langchain_huggingface import HuggingFaceEmbeddings
 
 
-class LangChainRetriever:
-    """A minimal LangChain retriever built on FAISS and HuggingFace embeddings."""
+class LangChainRetriever(BaseRetriever):
+    """A LangChain retriever built on FAISS and HuggingFace embeddings with LangSmith tracing support."""
+
+    model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    persist_directory: Path | None = None
+    embeddings: HuggingFaceEmbeddings | None = None
+    vectorstore: FAISS | None = None
 
     def __init__(
         self,
         model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         persist_directory: str | Path | None = None,
     ) -> None:
+        super().__init__()
         self.model_name = model_name
         self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
         self.persist_directory = (
@@ -36,6 +44,17 @@ class LangChainRetriever:
             except Exception:
                 return None
         return None
+
+    def _get_relevant_documents(
+        self,
+        query: str,
+        *,
+        run_manager: CallbackManagerForRetrieverRun | None = None,
+    ) -> list[Document]:
+        """Retrieve documents relevant to a query. This method is called by LangSmith for tracing."""
+        if self.vectorstore is None:
+            return []
+        return self.vectorstore.similarity_search(query=query, k=5)
 
     def add_texts(
         self,
@@ -70,6 +89,7 @@ class LangChainRetriever:
         self.save()
 
     def search(self, query: str, k: int = 5) -> list[Document]:
+        """Convenience method for retrieval. Use invoke() for LangSmith tracing."""
         if self.vectorstore is None:
             return []
         return self.vectorstore.similarity_search(query=query, k=k)
@@ -86,6 +106,7 @@ def build_retriever(
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
     persist_directory: str | Path | None = None,
 ) -> LangChainRetriever:
+    """Factory function to create a LangChainRetriever instance."""
     return LangChainRetriever(model_name=model_name, persist_directory=persist_directory)
 
 
@@ -95,6 +116,8 @@ def retrieve_documents(
     k: int = 5,
     metadatas: Sequence[dict[str, Any]] | None = None,
 ) -> list[Document]:
+    """Convenience function for one-off retrieval. For tracing, use invoke() on the retriever directly."""
     retriever = LangChainRetriever()
     retriever.add_texts(texts=texts, metadatas=metadatas)
     return retriever.search(query=query, k=k)
+
