@@ -1,8 +1,9 @@
-import re # For regular expressions.
+import re
 import requests
 from bs4 import BeautifulSoup
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
+from pptx import Presentation
 
 
 def is_exam_paper(text: str) -> bool:
@@ -61,35 +62,9 @@ def chunk_exam_questions(text: str):
             chunks.append(chunk)
 
     return chunks
-    if not text:
-        return []
-
-    normalized = re.sub(r"\s+", " ", text).strip()
 
 
-    question_pattern = re.compile(r"(?i)\b(question\s*\d+|q\s*\d+)\b")
-    matches = list(question_pattern.finditer(normalized))
-
-    if len(matches) < 2:
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=800,
-            chunk_overlap=100,
-            separators=["\n\n", "\n", " ", ""],
-        )
-        return splitter.split_text(normalized)
-
-    chunks = []
-    for idx, match in enumerate(matches):
-        start = match.start()
-        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(normalized)
-        chunk = normalized[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-
-    return chunks
-
-
-def extract_chunks_from_exam_paper (file_path):
+def extract_chunks_from_exam_paper(file_path):
     pages = extract_text_from_pdf(file_path)
     text = "\n\n".join(page or "" for page in pages if page)
     return chunk_exam_questions(text)
@@ -100,12 +75,12 @@ def extract_text_from_pdf(file_path):
     reader = PdfReader(file_path)
     pages = []
     for page in reader.pages:
-        pages.append(page.extract_text())
+        pages.append(page.extract_text() or "")
     return pages
 
 
 def extract_text_from_web(url):
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     soup = BeautifulSoup(response.content, "html.parser")
     text = soup.get_text()
     return text

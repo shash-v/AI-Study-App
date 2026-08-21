@@ -1,8 +1,16 @@
 from fastapi import APIRouter
 
-from app.services.retrieval import LangChainRetriever
+from pydantic import BaseModel
+
+from app.services.pipeline import StudyPipeline
 
 router = APIRouter()
+pipeline = StudyPipeline()
+
+
+class SearchRequest(BaseModel):
+    query: str
+    k: int = 5
 
 
 @router.get("/")
@@ -16,7 +24,12 @@ def health_check():
 
 
 @router.post("/search")
-def search_documents(query: str):
-    retriever = LangChainRetriever()
-    results = retriever.search(query, k=5)
-    return {"query": query, "results": [doc.page_content for doc in results]}
+def search_documents(request: SearchRequest):
+    documents = pipeline.retrieve(request.query)
+    return {
+        "query": request.query,
+        "results": [
+            {"text": document.page_content, "metadata": document.metadata}
+            for document in documents[: request.k]
+        ],
+    }
