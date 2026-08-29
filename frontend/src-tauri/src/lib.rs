@@ -20,6 +20,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState}; // <-- Add
 use std::thread;
 use std::time::Duration;
 
+
 fn toggle_panel(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let is_visible = window.is_visible().unwrap_or(false);
@@ -28,31 +29,38 @@ fn toggle_panel(app: &AppHandle) {
             // Slide Out (Right -> Off-screen)
             if let Ok(Some(monitor)) = window.current_monitor() {
                 let screen_width = monitor.size().width as i32;
-                let window_size = window.outer_size().unwrap_or(PhysicalSize::new(360, 800));
+                let window_size = window.outer_size().unwrap_or(PhysicalSize::new(380, 720));
+                let current_y = window.outer_position().map(|p| p.y).unwrap_or(40);
                 let start_x = screen_width - window_size.width as i32;
                 
                 let steps = 15;
                 for i in 0..=steps {
                     let progress = i as f32 / steps as f32;
                     let current_x = start_x + (window_size.width as f32 * progress) as i32;
-                    let _ = window.set_position(PhysicalPosition::new(current_x, 0));
+                    let _ = window.set_position(PhysicalPosition::new(current_x, current_y));
                     thread::sleep(Duration::from_millis(8));
                 }
             }
             let _ = window.hide();
         } else {
+            let _ = window.set_shadow(false); // Prevents square OS shadow glitches behind rounded corners
             // Position on right screen edge and Slide In
             if let Ok(Some(monitor)) = window.current_monitor() {
                 let screen_size = monitor.size();
                 let screen_width = screen_size.width as i32;
-                let window_width = 360;
-                let window_height = screen_size.height;
+                
+                // Set explicit panel dimensions (e.g., 380x720)
+                let window_width = 380;
+                let window_height = 720;
 
-                let _ = window.set_size(PhysicalSize::new(window_width as u32, window_height));
+                // Center vertically or offset slightly from the top edge
+                let target_y = ((screen_size.height as i32 - window_height as i32) / 2).max(20);
+
+                let _ = window.set_size(PhysicalSize::new(window_width as u32, window_height as u32));
                 let start_x = screen_width;
 
-                // Move offscreen before showing
-                let _ = window.set_position(PhysicalPosition::new(start_x, 0));
+                // Move offscreen at target Y position before showing
+                let _ = window.set_position(PhysicalPosition::new(start_x, target_y));
                 let _ = window.show();
                 let _ = window.set_focus();
 
@@ -63,7 +71,7 @@ fn toggle_panel(app: &AppHandle) {
                     let ease = 1.0 - (1.0 - progress).powi(2);
                     let current_x = start_x - ((window_width as f32) * ease) as i32;
                     
-                    let _ = window.set_position(PhysicalPosition::new(current_x, 0));
+                    let _ = window.set_position(PhysicalPosition::new(current_x, target_y));
                     thread::sleep(Duration::from_millis(8));
                 }
             }

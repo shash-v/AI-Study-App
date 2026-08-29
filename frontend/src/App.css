@@ -1,3 +1,61 @@
+/* --- Root Window Setup --- */
+:root,
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  /* CHANGED: Allow body to scroll naturally */
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+
+  /* Hide scrollbars on root window level */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbars for Chrome/Safari/Tauri Webview on root */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Panel Layout --- */
+.panel {
+  width: 100%;
+  /* CHANGED: min-height allows panel to grow past 100vh as content expands */
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: rgba(20, 20, 20, 0.80);
+  
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+
+  cursor: default;
+}
+
+/* Ensure controls retain proper mouse interactions */
+.panel button,
+.panel a,
+.panel input,
+.panel code {
+  cursor: auto;
+}
+
+.panel button,
+.panel a {
+  cursor: pointer;
+}
+
+/* --- Original Component Styles --- */
 .counter {
   font-size: 16px;
   padding: 5px 10px;
