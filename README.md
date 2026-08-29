@@ -1,3 +1,1 @@
-# my-study-hud
-
-Minimal starter scaffold for a Tauri + React + FastAPI RAG app.
+An agentic HUD application that helps you study more efficiently
