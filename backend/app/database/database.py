@@ -15,7 +15,7 @@ class EmbeddingStore:
         self.collection_name = collection_name
         self.persist_directory = persist_directory or os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "chroma"
-        )
+        ) # Persist directory for ChromaDB, located at backend/app/data/chroma.
         self._items: List[dict[str, Any]] = []
         self._collection = None
 
