@@ -7,10 +7,10 @@ body,
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  /* CHANGED: Allow body to scroll naturally */
   overflow-x: hidden;
   overflow-y: auto;
   background: transparent;
+  border: none;
 
   /* Hide scrollbars on root window level */
   scrollbar-width: none; /* Firefox */
@@ -27,18 +27,14 @@ body::-webkit-scrollbar,
 /* --- Panel Layout --- */
 .panel {
   width: 100%;
-  /* CHANGED: min-height allows panel to grow past 100vh as content expands */
   min-height: 100vh;
   box-sizing: border-box;
-  background: rgba(20, 20, 20, 0.80);
-  
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
-
+  background: rgba(20, 20, 20, 0.90);
+  border: none;
   border-radius: 30px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-
   cursor: default;
 }
 

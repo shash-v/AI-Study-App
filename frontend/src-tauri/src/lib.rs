@@ -16,7 +16,7 @@
 // }
 
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState}; // <-- Added ShortcutState
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use std::thread;
 use std::time::Duration;
 
@@ -84,9 +84,24 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                if let Ok(Some(monitor)) = window.current_monitor() {
+                    let screen_size = monitor.size();
+                    let screen_width = screen_size.width as i32;
+                    let window_width = 380;
+                    let window_height = 720;
+                    let target_y = ((screen_size.height as i32 - window_height as i32) / 2).max(20);
+
+                    let _ = window.set_size(PhysicalSize::new(window_width as u32, window_height as u32));
+                    let _ = window.set_position(PhysicalPosition::new(
+                        screen_width - window_width,
+                        target_y,
+                    ));
+                }
+            }
+
             let app_handle = app.handle().clone();
-            
-            // Register Ctrl+Shift+Q and handle ONLY Key Press
+
             app.global_shortcut().on_shortcut("Ctrl+Shift+Q", move |_app, _shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
                     toggle_panel(&app_handle);
