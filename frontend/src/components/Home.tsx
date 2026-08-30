@@ -1,6 +1,4 @@
 import React, { useRef } from 'react'
-import reactLogo from '../assets/react.svg'
-import viteLogo from '../assets/vite.svg'
 
 interface HomeProps {
   onLaunch: () => void
@@ -34,13 +32,13 @@ export const Home: React.FC<HomeProps> = ({
     <div className="panel">
       <section id="center">
         <div>
-          <h1>Talk with an AI</h1>
+          <h1>Dorox</h1>
         </div>
 
         {/* Action Buttons */}
         <div className="landing-actions">
           <button type="button" className="counter" onClick={onLaunch}>
-            Launch AI Assistant ✨
+            Launch AI Assistant
           </button>
 
           <button 
@@ -48,7 +46,7 @@ export const Home: React.FC<HomeProps> = ({
             className="counter upload-btn" 
             onClick={onOpenPomodoro}
           >
-            Pomodoro Timer 🍅
+            Pomodoro Timer
           </button>
 
           <button 
@@ -56,7 +54,7 @@ export const Home: React.FC<HomeProps> = ({
             className="counter upload-btn" 
             onClick={handleUploadClick}
           >
-            Upload Documents 📄
+            Upload Documents
           </button>
 
           {/* Hidden File Input */}
@@ -72,30 +70,6 @@ export const Home: React.FC<HomeProps> = ({
       </section>
 
       <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank" rel="noreferrer">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank" rel="noreferrer">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
     </div>
   )
 }
