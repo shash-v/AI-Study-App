@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { BackButton } from './BackButton'
+import { SettingsModal } from './SettingsModal'
 
 interface PomodoroProps {
   onBack: () => void
@@ -159,174 +161,139 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           width: '100%',
-          padding: '16px 20px',
+          padding: '24px 24px 0',
           boxSizing: 'border-box',
         }}
       >
-        <button type="button" className="header-back-btn" onClick={onBack}>
-          Back
-        </button>
+        <BackButton onBack={onBack} />
 
-        {/* Settings Gear Button */}
+        {/* Settings Dot Button */}
         <button
           type="button"
+          title="Settings"
           onClick={() => setShowSettings((prev) => !prev)}
           style={{
-            background: '#1e293b',
-            border: '1px solid #334155',
-            color: '#f8fafc',
-            width: '36px',
-            height: '36px',
+            width: '18px',
+            height: '18px',
             borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.3)',
+            border: '3px solid #141414',
+            boxShadow: showSettings 
+              ? '0 0 0 2px #f472b6bb, 0 4px 12px rgba(0, 0, 0, 0.9)' 
+              : '0 4px 12px rgba(0, 0, 0, 0.5)',
             cursor: 'pointer',
-            fontSize: '1rem',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-            transition: 'all 0.2s ease',
+            transition: 'transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+            transform: showSettings ? 'scale(1.25)' : 'scale(1)'
           }}
-        //   title="Timer Settings"
-        >
-          ⚙️
-        </button>
+        />
       </div>
 
       {/* Settings Modal Overlay */}
-      {showSettings && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(6px)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-          }}
-        >
-          <form
-            onSubmit={handleSaveSettings}
-            style={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '16px',
-              padding: '24px',
-              width: '100%',
-              maxWidth: '320px',
-              color: '#f8fafc',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 600 }}>Set Durations (minutes)</h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-                Work Session
-                <input
-                  type="number"
-                  min="1"
-                  max="120"
-                  value={customWork}
-                  onChange={(e) => setCustomWork(Number(e.target.value))}
-                  style={{
-                    width: '64px',
-                    padding: '6px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid #475569',
-                    backgroundColor: '#0f172a',
-                    color: '#fff',
-                    textAlign: 'center',
-                  }}
-                />
-              </label>
-
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-                Short Break
-                <input
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={customShort}
-                  onChange={(e) => setCustomShort(Number(e.target.value))}
-                  style={{
-                    width: '64px',
-                    padding: '6px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid #475569',
-                    backgroundColor: '#0f172a',
-                    color: '#fff',
-                    textAlign: 'center',
-                  }}
-                />
-              </label>
-
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-                Long Break
-                <input
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={customLong}
-                  onChange={(e) => setCustomLong(Number(e.target.value))}
-                  style={{
-                    width: '64px',
-                    padding: '6px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid #475569',
-                    backgroundColor: '#0f172a',
-                    color: '#fff',
-                    textAlign: 'center',
-                  }}
-                />
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setShowSettings(false)}
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Set Durations (minutes)">
+        <form onSubmit={handleSaveSettings}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+              Work Session
+              <input
+                type="number"
+                min="1"
+                max="120"
+                value={customWork}
+                onChange={(e) => setCustomWork(Number(e.target.value))}
                 style={{
-                  background: 'none',
-                  border: '1px solid #475569',
-                  color: '#94a3b8',
-                  padding: '8px 16px',
+                  width: '56px',
+                  padding: '6px 8px',
                   borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                style={{
-                  backgroundColor: '#6366f1',
-                  border: 'none',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backgroundColor: 'transparent',
                   color: '#fff',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  fontSize: '0.85rem',
+                  textAlign: 'center',
+                  outline: 'none',
                 }}
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+              />
+            </label>
+
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+              Short Break
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={customShort}
+                onChange={(e) => setCustomShort(Number(e.target.value))}
+                style={{
+                  width: '56px',
+                  padding: '6px 8px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backgroundColor: 'transparent',
+                  color: '#fff',
+                  textAlign: 'center',
+                  outline: 'none',
+                }}
+              />
+            </label>
+
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+              Long Break
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={customLong}
+                onChange={(e) => setCustomLong(Number(e.target.value))}
+                style={{
+                  width: '56px',
+                  padding: '6px 8px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backgroundColor: 'transparent',
+                  color: '#fff',
+                  textAlign: 'center',
+                  outline: 'none',
+                }}
+              />
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => setShowSettings(false)}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: 'rgba(255, 255, 255, 0.7)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{
+                backgroundColor: 'var(--accent, #3b82f6)',
+                border: 'none',
+                color: '#fff',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 400,
+                fontSize: '0.85rem',
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </SettingsModal>
 
       {/* Main View */}
       <div className="chat-center-container">
-        <div className="empty-state-view" style={{ width: '100%', maxWidth: '440px', margin: '0 auto' }}>
-          <h1 className="ask-heading">
-            {mode === 'work' ? 'Focus Session ⏱️' : mode === 'shortBreak' ? 'Short Break ☕' : 'Long Break 🌴'}
-          </h1>
-
+        <div className="empty-state-view" style={{ width: '100%', maxWidth: '380px', margin: '0 auto' }}>
           {/* Draggable Ovular Slider */}
           <div
             ref={trackRef}
@@ -335,29 +302,29 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: '#1e293b',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '9999px',
-              padding: '4px',
+              padding: '3px',
               width: '100%',
               boxSizing: 'border-box',
-              border: '1px solid #334155',
-              boxShadow: '0 0 16px rgba(99, 102, 241, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none',
               overflow: 'hidden',
+              marginBottom: '16px',
             }}
           >
             {/* Sliding Active Pill Background */}
             <div
               style={{
                 position: 'absolute',
-                top: '4px',
-                bottom: '4px',
-                left: '4px',
-                width: 'calc((100% - 8px) / 3)',
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                top: '3px',
+                bottom: '3px',
+                left: '3px',
+                width: 'calc((100% - 6px) / 3)',
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '9999px',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)',
                 transform: `translateX(${activeIndex * 100}%)`,
                 transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 zIndex: 1,
@@ -373,10 +340,10 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
                   position: 'relative',
                   zIndex: 2,
                   textAlign: 'center',
-                  padding: '10px 4px',
+                  padding: '8px 4px',
                   fontSize: '0.85rem',
-                  fontWeight: mode === key ? 600 : 500,
-                  color: mode === key ? '#ffffff' : '#94a3b8',
+                  fontWeight: 400,
+                  color: mode === key ? '#ffffff' : 'rgba(255, 255, 255, 0.4)',
                   transition: 'color 0.2s ease',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -390,56 +357,58 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
           </div>
 
           {/* Digital Timer Clock Display */}
-          <div style={{ fontSize: '4.5rem', fontWeight: 700, letterSpacing: '2px', margin: '20px 0' }}>
+          <div style={{ 
+            fontSize: '3.75rem', 
+            fontWeight: 400, 
+            fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace',
+            fontVariantNumeric: 'tabular-nums',
+            letterSpacing: '2px', 
+            margin: '16px 0 24px', 
+            color: '#ffffff' 
+          }}>
             {formatTime(timeLeft)}
           </div>
 
           {/* Primary Timer Actions */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', width: '100%' }}>
             <button
-                type="button"
-                onClick={toggleTimer}
-                style={{
+              type="button"
+              onClick={toggleTimer}
+              style={{
                 flex: 1,
-                padding: '12px 24px',
+                padding: '10px 20px',
                 borderRadius: '9999px',
-                border: 'none',
-                background: isRunning 
-                    ? '#334155' 
-                    : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                border: isRunning ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                background: isRunning ? 'transparent' : 'var(--accent, #3b82f6)',
                 color: '#ffffff',
-                fontSize: '1rem',
-                fontWeight: 600,
+                fontSize: '0.9rem',
+                fontWeight: 400,
                 cursor: 'pointer',
-                boxShadow: isRunning 
-                    ? '0 2px 8px rgba(0,0,0,0.2)' 
-                    : '0 4px 14px rgba(99, 102, 241, 0.3)',
                 transition: 'all 0.2s ease',
-                }}
+              }}
             >
-                {isRunning ? 'Pause' : 'Start'}
+              {isRunning ? 'Pause' : 'Start'}
             </button>
             
             <button
-                type="button"
-                onClick={resetTimer}
-                style={{
+              type="button"
+              onClick={resetTimer}
+              style={{
                 flex: 1,
-                padding: '12px 24px',
+                padding: '10px 20px',
                 borderRadius: '9999px',
-                border: '1px solid #334155',
-                backgroundColor: '#1e293b',
-                color: '#94a3b8',
-                fontSize: '1rem',
-                fontWeight: 500,
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'transparent',
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '0.9rem',
+                fontWeight: 400,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                 transition: 'all 0.2s ease',
-                }}
+              }}
             >
-                Reset
+              Reset
             </button>
-            </div>
+          </div>
         </div>
       </div>
 

@@ -202,13 +202,13 @@ export const Home: React.FC<HomeProps> = ({
         </div>
 
         <div className="landing-actions">
-          <button type="button" className="counter" onClick={onLaunch}>
+          <button type="button" className="glossy-button" onClick={onLaunch}>
             Launch AI Assistant
           </button>
 
           <button 
             type="button" 
-            className="counter upload-btn" 
+            className="glossy-button upload-btn" 
             onClick={onOpenPomodoro}
           >
             Pomodoro Timer
@@ -216,7 +216,7 @@ export const Home: React.FC<HomeProps> = ({
 
           <button 
             type="button" 
-            className="counter upload-btn" 
+            className="glossy-button upload-btn" 
             onClick={handleUploadClick}
           >
             Upload Documents
