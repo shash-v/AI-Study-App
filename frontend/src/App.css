@@ -29,7 +29,7 @@ body::-webkit-scrollbar,
   width: 100%;
   min-height: 100vh;
   box-sizing: border-box;
-  background: rgba(20, 20, 20, 0.90);
+  background: rgba(20, 20, 20, 0.98);
   border: none;
   border-radius: 30px;
   overflow: hidden;
