@@ -28,3 +28,7 @@ export const searchDocuments = async (query: string, k: number = 5): Promise<Sea
   if (!response.ok) throw new Error("Search request failed")
   return response.json()
 }
+
+export const uploadDocuments = async (files: FileList): Promise<void> => {
+
+}
