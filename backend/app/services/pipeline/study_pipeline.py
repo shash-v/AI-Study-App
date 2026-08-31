@@ -34,7 +34,7 @@ class StudyPipeline:
         )
         return len(chunks)
 
-    def ingest_file(self, file_path: str | Path) -> int:
+    def ingest_file(self, file_path: str, original_filename: str = None) -> int:
         path = Path(file_path)
         suffix = path.suffix.lower()
 
@@ -46,6 +46,7 @@ class StudyPipeline:
             text = path.read_text(encoding="utf-8")
         else:
             raise ValueError(f"Unsupported document type: {suffix or 'unknown'}")
+        
 
         return self.ingest_text(text, metadata={"source": str(path)})
 

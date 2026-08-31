@@ -14,6 +14,8 @@ interface DocumentItem {
   uploadedAt: string
 }
 
+const API_BASE_URL = 'http://localhost:8000/api'
+
 export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [isDBModalOpen, setIsDBModalOpen] = useState<boolean>(false)
@@ -34,6 +36,11 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
+    const formData = new FormData()
+    Array.from(files).forEach((file) => {
+      formData.append('files', file)
+    })
+
     const newDocs: DocumentItem[] = Array.from(files).map((file, idx) => ({
       id: Date.now().toString() + idx,
       name: file.name,
@@ -43,11 +50,21 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
 
     try {
       setIsLoading(true)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to upload files to backend')
+      }
+
+      const result = await response.json()
       setDocuments((prev) => [...prev, ...newDocs])
-      alert('Files uploaded successfully!')
+      alert(result.message || 'Files uploaded successfully!')
     } catch (error) {
       console.error('Upload failed', error)
+      alert('Error uploading files to the backend server.')
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +106,7 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
 
             <div className="modal-body">
               {isLoading ? (
-                <p className="modal-status-text">Updating files...</p>
+                <p className="modal-status-text">Uploading and indexing files...</p>
               ) : documents.length === 0 ? (
                 <p className="modal-status-text">No documents found in database.</p>
               ) : (

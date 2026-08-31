@@ -29,6 +29,18 @@ export const searchDocuments = async (query: string, k: number = 5): Promise<Sea
   return response.json()
 }
 
-export const uploadDocuments = async (files: FileList): Promise<void> => {
+export const uploadDocuments = async (files: FileList): Promise<any> => {
+  const formData = new FormData()
+  
+  Array.from(files).forEach((file) => {
+    formData.append("files", file)
+  })
 
+  const response = await fetch('http://localhost:8000/api/upload', {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!response.ok) throw new Error("Document upload failed")
+  return response.json()
 }
