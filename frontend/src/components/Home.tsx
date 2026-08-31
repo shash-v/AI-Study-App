@@ -1,36 +1,20 @@
-import React, { useRef, useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { MathOrb } from './MathOrb'
 import { checkHealth } from '../../services/api' // Adjust path if needed
 
 interface HomeProps {
   onLaunch: () => void
   onOpenPomodoro?: () => void
-  onUploadDocuments?: (files: FileList) => void
+  onOpenUploadPage: () => void
 }
 
 export const Home: React.FC<HomeProps> = ({ 
   onLaunch, 
   onOpenPomodoro, 
-  onUploadDocuments 
+  onOpenUploadPage 
 }) => {
   const [isDoXHovered, setIsDoXHovered] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      if (onUploadDocuments) {
-        onUploadDocuments(files)
-      } else {
-        console.log('Selected files:', files)
-      }
-    }
-  }
 
   // Calling your real backend API function
   const handleDoXClick = async () => {
@@ -88,19 +72,10 @@ export const Home: React.FC<HomeProps> = ({
           <button 
             type="button" 
             className="glossy-button upload-btn" 
-            onClick={handleUploadClick}
+            onClick={onOpenUploadPage}
           >
             Upload
           </button>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-            multiple
-            accept=".pdf,.txt,.doc,.docx"
-          />
         </div>
       </section>
 
