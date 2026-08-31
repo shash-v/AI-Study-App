@@ -28,6 +28,10 @@ export const BackButton: React.FC<BackButtonProps> = ({
       className="back-btn"
       onClick={onBack}
       title={title}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.08)', // Slightly lighter and more visible
+        border: '1px solid rgba(255, 255, 255, 0.15)', // Crisp subtle border
+      }}
     >
       <div className="inner">
         <span></span>

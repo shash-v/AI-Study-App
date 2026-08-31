@@ -408,19 +408,12 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', width: '100%' }}>
               <button
                 type="button"
+                className="glossy-button"
                 onClick={toggleTimer}
                 style={{
                   flex: 1,
                   padding: isSleepMode ? '8px 16px' : '10px 20px',
-                  borderRadius: '9999px',
-                  border: isRunning ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-                  background: isRunning ? 'transparent' : 'var(--accent, #3b82f6)',
-                  color: '#ffffff',
-                  fontSize: '0.9rem',
-                  fontWeight: 400,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
+                 }}
               >
                 {isRunning ? 'Pause' : 'Start'}
               </button>
