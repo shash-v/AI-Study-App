@@ -1,0 +1,57 @@
+/* --- Root Window Setup --- */
+:root,
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+  border: none;
+
+  /* Hide scrollbars on root window level */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbars for Chrome/Safari/Tauri Webview on root */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Panel Layout --- */
+.panel {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: rgba(20, 20, 20, 0.98);
+  border: none;
+  border-radius: 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+/* Ensure controls retain proper mouse interactions */
+.panel button,
+.panel a,
+.panel input,
+.panel code {
+  cursor: auto;
+}
+
+.panel button,
+.panel a {
+  cursor: pointer;
+}
+
+/* Hide corner tick decorations completely */
+.ticks {
+  display: none !important;
+}
