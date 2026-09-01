@@ -11,6 +11,7 @@ from app.services.ingestion import (
     extract_text_from_pptx,
 )
 from app.services.retrieval import LangChainRetriever
+from langsmith import traceable
 
 
 class StudyPipeline:
@@ -19,6 +20,7 @@ class StudyPipeline:
     def __init__(self, retriever: LangChainRetriever | None = None) -> None:
         self.retriever = retriever or LangChainRetriever()
 
+    @traceable
     def ingest_text(
         self,
         text: str,
@@ -28,12 +30,10 @@ class StudyPipeline:
         if not chunks:
             return 0
 
-        self.retriever.add_texts(
-            chunks,
-            metadatas=[metadata or {} for _ in chunks],
-        )
+        self.retriever.add_texts(chunks, metadatas=[metadata or {} for _ in chunks])
         return len(chunks)
 
+    @traceable
     def ingest_file(self, file_path: str, original_filename: str = None) -> int:
         path = Path(file_path)
         suffix = path.suffix.lower()
@@ -49,6 +49,8 @@ class StudyPipeline:
         
 
         return self.ingest_text(text, metadata={"source": str(path)})
-
+    
+    
+    @traceable
     def retrieve(self, question: str) -> list[Document]:
         return self.retriever.invoke(question)

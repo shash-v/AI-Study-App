@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000/api"
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface SearchResult {
   text: string
@@ -36,7 +36,7 @@ export const uploadDocuments = async (files: FileList): Promise<any> => {
     formData.append("files", file)
   })
 
-  const response = await fetch('http://localhost:8000/api/upload', {
+  const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     body: formData,
   })
