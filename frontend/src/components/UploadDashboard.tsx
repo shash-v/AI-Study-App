@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import { getCurrentWindow } from '@tauri-apps/api/window'
-import { LogicalSize } from '@tauri-apps/api/dpi'
+import React, { useState } from 'react'
 import { BackButton } from './BackButton'
 
 interface UploadDashboardProps {
@@ -20,17 +18,6 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [isDBModalOpen, setIsDBModalOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-
-  useEffect(() => {
-    const resizeWindow = async () => {
-      try {
-        await getCurrentWindow().setSize(new LogicalSize(1100, 750))
-      } catch (error) {
-        console.error('Failed to resize window:', error)
-      }
-    }
-    resizeWindow()
-  }, [])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files

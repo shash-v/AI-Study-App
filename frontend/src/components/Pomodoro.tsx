@@ -162,6 +162,7 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              // width: '100%',
               width: '100%',
               padding: '24px 24px 0',
               boxSizing: 'border-box',

@@ -10,9 +10,8 @@ type CurrentView = 'home' | 'dashboard' | 'pomodoro' | 'upload'
 function App() {
   const [currentView, setCurrentView] = useState<CurrentView>('home')
 
-  const handleUploadDocuments = (files: FileList) => {
-    console.log('Files uploaded:', files)
-    setCurrentView('dashboard')
+  const handleOpenUploadPage = () => {
+    setCurrentView('upload')
   }
 
   switch (currentView) {
@@ -28,7 +27,7 @@ function App() {
         <Home
           onLaunch={() => setCurrentView('dashboard')}
           onOpenPomodoro={() => setCurrentView('pomodoro')}
-          onOpenUploadPage={() => setCurrentView('upload')}
+          onOpenUploadPage={handleOpenUploadPage}
         />
       )
   }
