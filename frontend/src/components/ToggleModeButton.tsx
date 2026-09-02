@@ -4,12 +4,17 @@ import { PhysicalSize, PhysicalPosition } from '@tauri-apps/api/dpi'
 import { listen } from '@tauri-apps/api/event'
 
 export const ToggleModeButton: React.FC = () => {
-  const [isLargeMode, setIsLargeMode] = useState(false)
+  // Initialize state synchronously from localStorage to persist across view switches
+  const [isLargeMode, setIsLargeMode] = useState(() => {
+    return localStorage.getItem('isLargeMode') === 'true'
+  })
+  const [isHovered, setIsHovered] = useState(false)
 
   // Listen for hotkey shortcut event from Rust to reset large mode state
   useEffect(() => {
     const unlistenPromise = listen('reset-large-mode', () => {
       setIsLargeMode(false)
+      localStorage.setItem('isLargeMode', 'false')
     })
 
     return () => {
@@ -25,7 +30,6 @@ export const ToggleModeButton: React.FC = () => {
       const monitor = await currentMonitor()
 
       if (nextLargeMode) {
-        console.log('Resizing to large mode (1200x800 physical)...')
         const windowWidth = 1200
         const windowHeight = 800
 
@@ -70,9 +74,10 @@ export const ToggleModeButton: React.FC = () => {
       }
 
       setIsLargeMode(nextLargeMode)
+      localStorage.setItem('isLargeMode', String(nextLargeMode))
       console.log('Successfully toggled state to:', nextLargeMode)
     } catch (error) {
-      console.error('CRITICAL: Failed to toggle window mode:', error)
+      console.error('Failed to toggle window mode:', error)
       alert(`Window resize failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
@@ -81,8 +86,9 @@ export const ToggleModeButton: React.FC = () => {
     <button
       type="button"
       aria-label={isLargeMode ? 'Switch to side panel mode' : 'Switch to large mode'}
-      title={isLargeMode ? 'Side panel mode' : 'Large mode'}
       onClick={() => void handleToggleLargeMode()}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'absolute',
         top: '16px',
@@ -90,21 +96,31 @@ export const ToggleModeButton: React.FC = () => {
         width: '34px',
         height: '34px',
         borderRadius: '10px',
-        border: '1px solid rgba(255, 255, 255, 0.14)',
-        background: 'rgba(255, 255, 255, 0.04)',
+        border: `1px solid ${isHovered ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.14)'}`,
+        background: isHovered ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
         color: '#fff',
-        fontSize: '18px',
-        lineHeight: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         zIndex: 99999,
         pointerEvents: 'auto',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        boxShadow: isHovered ? '0 10px 25px rgba(0,0,0,0.35)' : '0 10px 30px rgba(0,0,0,0.25)',
+        transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      {isLargeMode ? '⤡' : '⤢'}
+      {isLargeMode ? (
+        // Collapse / Minimize SVG Icon
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+        </svg>
+      ) : (
+        // Expand / Maximize SVG Icon
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+        </svg>
+      )}
     </button>
   )
 }
