@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { BackButton } from './BackButton'
+import { ToggleModeButton } from './ToggleModeButton'
 
 interface ChatDashboardProps {
   onBack: () => void
@@ -187,9 +188,11 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
           width: '100%',
           padding: '24px 24px 0',
           boxSizing: 'border-box',
+          position: 'relative',
         }}
       >
         <BackButton onBack={onBack} />
+        <ToggleModeButton />
       </div>
 
       {/* Center Layout Container */}
