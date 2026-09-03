@@ -98,7 +98,7 @@ export const ToggleModeButton: React.FC = () => {
         borderRadius: '10px',
         border: `1px solid ${isHovered ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.14)'}`,
         background: isHovered ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-        color: '#fff',
+        color: isHovered ? '#fff' : 'rgba(255, 255, 255, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { BackButton } from './BackButton'
+import { ToggleModeButton } from './ToggleModeButton'
 
 interface UploadDashboardProps {
   onBack: () => void
@@ -58,9 +59,21 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="panel chat-panel upload-panel-root">
-      <div className="upload-header">
+    <div className="panel chat-panel upload-panel-root" style={{ position: 'relative' }}>
+      <div 
+        className="upload-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          padding: '24px 24px 0',
+          boxSizing: 'border-box',
+          position: 'relative',
+        }}
+      >
         <BackButton onBack={onBack} />
+        <ToggleModeButton />
       </div>
 
       <div id="center" className="upload-container">
