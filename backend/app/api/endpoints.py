@@ -4,6 +4,7 @@ from typing import List
 import shutil
 from pathlib import Path
 import tempfile
+from datetime import datetime, timezone
 
 from app.services.pipeline import StudyPipeline
 
@@ -55,7 +56,12 @@ async def upload_document(files: UploadFile = File(...)):
 
         try:
             # Passes original filename so your metadata stays clean
-            chunks_added = pipeline.ingest_file(temp_path, original_filename=file.filename)
+            chunks_added = pipeline.ingest_file(
+                temp_path,
+                original_filename=file.filename,
+                size_bytes=Path(temp_path).stat().st_size,
+                uploaded_at=datetime.now(timezone.utc).isoformat(),
+            )
             total_chunks += chunks_added
         finally:
             Path(temp_path).unlink(missing_ok=True)

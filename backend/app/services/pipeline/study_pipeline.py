@@ -115,12 +115,19 @@ class StudyPipeline:
         if not chunks:
             return 0
 
-        chunk_metadata = [metadata or {} for _ in chunks]
+        document_metadata = self.embedding_store.register_document(metadata or {})
+        chunk_metadata = [document_metadata for _ in chunks]
         self.retriever.add_texts(chunks, metadatas=chunk_metadata)
         self.embedding_store.add_texts(chunks, metadatas=chunk_metadata)
         return len(chunks)
 
-    def ingest_file(self, file_path: str, original_filename: str | None = None) -> int:
+    def ingest_file(
+        self,
+        file_path: str,
+        original_filename: str | None = None,
+        size_bytes: int | None = None,
+        uploaded_at: str | None = None,
+    ) -> int:
         path = Path(file_path)
         suffix = path.suffix.lower()
 
@@ -134,7 +141,13 @@ class StudyPipeline:
             raise ValueError(f"Unsupported document type: {suffix or 'unknown'}")
 
         source = original_filename or str(path)
-        return self.ingest_text(text, metadata={"source": source})
+        metadata: dict[str, Any] = {"source": source}
+        if size_bytes is not None:
+            metadata["size_bytes"] = size_bytes
+        if uploaded_at is not None:
+            metadata["uploaded_at"] = uploaded_at
+
+        return self.ingest_text(text, metadata=metadata)
 
     def retrieve(self, question: str) -> list[Document]:
         if self.retriever.vectorstore is None:

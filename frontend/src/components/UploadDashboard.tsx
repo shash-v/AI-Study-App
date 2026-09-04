@@ -19,6 +19,8 @@ interface ApiDocument {
   text: string
   metadata?: {
     source?: string
+    size_bytes?: string | number
+    uploaded_at?: string
   }
 }
 
@@ -31,11 +33,25 @@ const getDocumentName = (document: ApiDocument) => {
   return source ? source.split(/[\\/]/).pop() || source : 'Untitled document'
 }
 
+const formatFileSize = (sizeBytes?: string | number) => {
+  const bytes = Number(sizeBytes)
+  if (!Number.isFinite(bytes)) return 'N/A'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const formatUploadDate = (uploadedAt?: string) => {
+  if (!uploadedAt) return 'N/A'
+  const date = new Date(uploadedAt)
+  return Number.isNaN(date.getTime()) ? uploadedAt : date.toLocaleString()
+}
+
 const toDocumentItem = (document: ApiDocument): DocumentItem => ({
   id: document.id,
   name: getDocumentName(document),
-  size: 'N/A',
-  uploadedAt: 'Indexed',
+  size: formatFileSize(document.metadata?.size_bytes),
+  uploadedAt: formatUploadDate(document.metadata?.uploaded_at),
 })
 
 export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
@@ -126,7 +142,7 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
       <div id="center" className="upload-container">
         <div className="upload-actions">
           <button type="button" className="toggle-btn" onClick={handleOpenDatabase}>
-            View Database Files ({documents.length})
+            View Database Files
           </button>
         </div>
 

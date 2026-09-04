@@ -1,6 +1,7 @@
 import math
 import os
 import uuid
+import hashlib
 from typing import Any, List, Optional
 
 import chromadb
@@ -17,14 +18,21 @@ class EmbeddingStore:
             os.path.dirname(__file__), "..", "..", "data", "chroma"
         )
         self._items: List[dict[str, Any]] = []
+        self._documents: List[dict[str, Any]] = []
         self._collection = None
+        self._documents_collection = None
 
         try:
             self._client = chromadb.PersistentClient(path=self.persist_directory)
             self._collection = self._client.get_or_create_collection(name=self.collection_name)
+            self._documents_collection = self._client.get_or_create_collection(
+                name=f"{self.collection_name}-documents"
+            )
+            self._migrate_legacy_documents()
         except Exception as e:
             print(f"Warning: Could not initialize ChromaDB ({e}). Falling back to in-memory store.")
             self._collection = None
+            self._documents_collection = None
 
     def add_embeddings(
         self,
@@ -129,15 +137,83 @@ class EmbeddingStore:
                 return item
         return None
 
+    def register_document(self, metadata: dict[str, Any]) -> dict[str, Any]:
+        """Store one metadata record per source document, independent of its chunks."""
+        source = self._next_available_source(str(metadata.get("source", "")))
+        metadata = {**metadata, "source": source}
+        document_id = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        document_metadata = {key: str(value) for key, value in metadata.items()}
+
+        if self._documents_collection is not None:
+            self._documents_collection.upsert(
+                ids=[document_id],
+                documents=[source or document_id],
+                metadatas=[document_metadata],
+            )
+        else:
+            existing = next((item for item in self._documents if item["id"] == document_id), None)
+            if existing is None:
+                self._documents.append(
+                    {
+                        "id": document_id,
+                        "text": source or document_id,
+                        "metadata": document_metadata,
+                    }
+                )
+            else:
+                existing["text"] = source or document_id
+                existing["metadata"] = document_metadata
+
+        return metadata
+
+    def _next_available_source(self, source: str) -> str:
+        """Return source with a numeric suffix when its filename is already registered."""
+        if not source:
+            return source
+
+        existing_sources = {
+            str(metadata.get("source", "")).casefold()
+            for metadata in self._registered_metadata()
+        }
+        if source.casefold() not in existing_sources:
+            return source
+
+        source_path = os.path.basename(source)
+        stem, extension = os.path.splitext(source_path)
+        directory = os.path.dirname(source)
+        suffix = 1
+        while True:
+            candidate_name = f"{stem} ({suffix}){extension}"
+            candidate = os.path.join(directory, candidate_name) if directory else candidate_name
+            if candidate.casefold() not in existing_sources:
+                return candidate
+            suffix += 1
+
+    def _registered_metadata(self) -> List[dict[str, Any]]:
+        if self._documents_collection is not None:
+            result = self._documents_collection.get(include=["metadatas"])
+            return result.get("metadatas", [])
+        return [item["metadata"] for item in self._documents]
+
+    def _migrate_legacy_documents(self) -> None:
+        """Populate the document registry from chunks created before it existed."""
+        if self._collection is None or self._documents_collection is None:
+            return
+        if self._documents_collection.count() > 0:
+            return
+
+        legacy = self._collection.get(include=["metadatas"])
+        for metadata in legacy.get("metadatas", []):
+            if metadata and metadata.get("source"):
+                self.register_document({"source": metadata["source"]})
+
     def list_documents(self) -> List[dict[str, Any]]:
-        """Return every document stored in the Chroma collection or fallback."""
-        if self._collection is not None:
-            result = self._collection.get(include=["documents", "metadatas"])
+        """Return one record per source document, not one record per chunk."""
+        if self._documents_collection is not None:
+            result = self._documents_collection.get(include=["documents", "metadatas"])
             ids = result.get("ids", [])
             documents = result.get("documents", [])
             metadatas = result.get("metadatas", [])
-
-            print(f"Retrieved {len(documents)} documents from ChromaDB collection '{self.collection_name}'.")
 
             return [
                 {
@@ -158,7 +234,7 @@ class EmbeddingStore:
                 "text": item["text"],
                 "metadata": item["metadata"],
             }
-            for item in self._items
+            for item in self._documents
         ]
 
     def delete(self, item_ids: List[str]) -> None:
