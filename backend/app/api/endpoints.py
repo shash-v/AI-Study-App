@@ -37,6 +37,11 @@ def search_documents(request: SearchRequest):
         ],
     }
 
+@router.get("/all-documents") 
+def get_all_documents():
+    documents = pipeline.list_documents()
+    return {"documents": documents}
+
 
 @router.post("/upload")
 async def upload_document(files: UploadFile = File(...)):

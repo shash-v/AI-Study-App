@@ -44,3 +44,11 @@ export const uploadDocuments = async (files: FileList): Promise<any> => {
   if (!response.ok) throw new Error("Document upload failed")
   return response.json()
 }
+
+export const getAllDocuments = async (): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/all-documents`, {
+    method: "GET",
+  })
+  if (!response.ok) throw new Error("Failed to fetch all documents")
+  return response.json()
+}

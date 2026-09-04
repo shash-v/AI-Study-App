@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { BackButton } from './BackButton'
 import { ToggleModeButton } from './ToggleModeButton'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface UploadDashboardProps {
   onBack: () => void
@@ -13,12 +14,58 @@ interface DocumentItem {
   uploadedAt: string
 }
 
-const API_BASE_URL = 'http://localhost:8000/api'
+interface ApiDocument {
+  id: string
+  text: string
+  metadata?: {
+    source?: string
+  }
+}
+
+interface DocumentsResponse {
+  documents: ApiDocument[]
+}
+
+const getDocumentName = (document: ApiDocument) => {
+  const source = document.metadata?.source
+  return source ? source.split(/[\\/]/).pop() || source : 'Untitled document'
+}
+
+const toDocumentItem = (document: ApiDocument): DocumentItem => ({
+  id: document.id,
+  name: getDocumentName(document),
+  size: 'N/A',
+  uploadedAt: 'Indexed',
+})
 
 export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [isDBModalOpen, setIsDBModalOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  const loadDocuments = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`${API_BASE_URL}/all-documents`)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents from backend')
+      }
+
+      const result: DocumentsResponse = await response.json()
+      setDocuments(result.documents.map(toDocumentItem))
+    } catch (error) {
+      console.error('Failed to load database documents', error)
+      alert('Error loading documents from the backend server.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOpenDatabase = () => {
+    setIsDBModalOpen(true)
+    void loadDocuments()
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -78,7 +125,7 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
 
       <div id="center" className="upload-container">
         <div className="upload-actions">
-          <button type="button" className="toggle-btn" onClick={() => setIsDBModalOpen(true)}>
+          <button type="button" className="toggle-btn" onClick={handleOpenDatabase}>
             View Database Files ({documents.length})
           </button>
         </div>

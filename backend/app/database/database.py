@@ -15,16 +15,14 @@ class EmbeddingStore:
         self.collection_name = collection_name
         self.persist_directory = persist_directory or os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "chroma"
-        ) # Persist directory for ChromaDB, located at backend/app/data/chroma.
+        )
         self._items: List[dict[str, Any]] = []
         self._collection = None
 
-        # Attempt persistent storage with ChromaDB
         try:
             self._client = chromadb.PersistentClient(path=self.persist_directory)
             self._collection = self._client.get_or_create_collection(name=self.collection_name)
         except Exception as e:
-            # Fall back to in-memory store if ChromaDB initialization fails
             print(f"Warning: Could not initialize ChromaDB ({e}). Falling back to in-memory store.")
             self._collection = None
 
@@ -38,7 +36,6 @@ class EmbeddingStore:
         if len(texts) != len(embeddings):
             raise ValueError("texts and embeddings must be the same length")
 
-        # FIX 1: Generate unique UUIDs if IDs are not provided to avoid key collisions
         if ids is None:
             ids = [str(uuid.uuid4()) for _ in texts]
 
@@ -55,9 +52,8 @@ class EmbeddingStore:
                 ids=ids,
                 metadatas=metadatas,
             )
-            return ids
 
-        # In-memory fallback
+        # Always sync with in-memory store so both stay identical
         for text, embedding, item_id, metadata in zip(texts, embeddings, ids, metadatas):
             self._items.append(
                 {
@@ -75,22 +71,32 @@ class EmbeddingStore:
                 query_embeddings=[query_embedding],
                 n_results=n_results,
             )
+
+            # Check if any documents were found
+            ids = results.get("ids", [[]])
+            if not ids or not ids[0]:
+                return []
+
+            documents = results.get("documents", [[]])[0]
+            metadatas = results.get("metadatas", [[]])[0]
+            distances = results.get("distances", [[]])[0]
+
             return [
                 {
                     "id": item_id,
                     "text": text,
-                    "metadata": metadata,
+                    "metadata": metadata or {},
                     "distance": distance,
                 }
                 for item_id, text, metadata, distance in zip(
-                    results.get("ids", [[]])[0],
-                    results.get("documents", [[]])[0],
-                    results.get("metadatas", [[]])[0],
-                    results.get("distances", [[]])[0],
+                    ids[0],
+                    documents,
+                    metadatas if metadatas else [{}] * len(ids[0]),
+                    distances if distances else [0.0] * len(ids[0]),
                 )
             ]
 
-        # In-memory similarity computation
+        # In-memory similarity computation fallback
         scored_items = []
         for item in self._items:
             score = cosine_similarity(query_embedding, item["embedding"])
@@ -115,7 +121,7 @@ class EmbeddingStore:
             return {
                 "id": result["ids"][0],
                 "text": result["documents"][0],
-                "metadata": result["metadatas"][0],
+                "metadata": result["metadatas"][0] if result.get("metadatas") else {},
             }
 
         for item in self._items:
@@ -123,10 +129,41 @@ class EmbeddingStore:
                 return item
         return None
 
+    def list_documents(self) -> List[dict[str, Any]]:
+        """Return every document stored in the Chroma collection or fallback."""
+        if self._collection is not None:
+            result = self._collection.get(include=["documents", "metadatas"])
+            ids = result.get("ids", [])
+            documents = result.get("documents", [])
+            metadatas = result.get("metadatas", [])
+
+            print(f"Retrieved {len(documents)} documents from ChromaDB collection '{self.collection_name}'.")
+
+            return [
+                {
+                    "id": item_id,
+                    "text": text,
+                    "metadata": metadata or {},
+                }
+                for item_id, text, metadata in zip(
+                    ids,
+                    documents,
+                    metadatas if metadatas else [{}] * len(ids),
+                )
+            ]
+
+        return [
+            {
+                "id": item["id"],
+                "text": item["text"],
+                "metadata": item["metadata"],
+            }
+            for item in self._items
+        ]
+
     def delete(self, item_ids: List[str]) -> None:
         if self._collection is not None:
             self._collection.delete(ids=item_ids)
-            return
 
         item_ids_set = set(item_ids)
         self._items = [item for item in self._items if item["id"] not in item_ids_set]
@@ -138,8 +175,7 @@ class EmbeddingStore:
         metadatas: Optional[List[dict[str, Any]]] = None,
     ) -> List[str]:
         raw_embeddings = embed_sentences(texts)
-        
-        # FIX 2: Safely handle both numpy arrays and standard lists
+
         if hasattr(raw_embeddings, "tolist"):
             embeddings_list = raw_embeddings.tolist()
         else:
