@@ -94,6 +94,27 @@ class VectorStoreManager:
         self.persist_directory.mkdir(parents=True, exist_ok=True)
         self.vectorstore.save_local(str(self.persist_directory))
 
+    def delete_by_document(self, document_id: str, source: str) -> None:
+        if self.vectorstore is None:
+            return
+
+        remaining_documents = [
+            document
+            for document in self.vectorstore.docstore._dict.values()
+            if document.metadata.get("document_id") != document_id
+            and document.metadata.get("source") != source
+        ]
+        self.vectorstore = (
+            FAISS.from_documents(remaining_documents, self.embeddings)
+            if remaining_documents
+            else None
+        )
+        if self.vectorstore is None:
+            for path in self.persist_directory.glob("index.*"):
+                path.unlink(missing_ok=True)
+        else:
+            self.save()
+
 
 class StudyPipeline:
     """Application workflow for ingestion, retrieval, and document listing."""
@@ -159,6 +180,18 @@ class StudyPipeline:
 
     def list_documents(self) -> list[dict[str, Any]]:
         return self.embedding_store.list_documents()
+
+    def delete_document(self, document_id: str) -> bool:
+        document = self.embedding_store.delete_document(document_id)
+        if document is None:
+            return False
+
+        metadata = document.get("metadata", {})
+        self.retriever.delete_by_document(
+            document_id=document_id,
+            source=str(metadata.get("source", "")),
+        )
+        return True
 
 
 # --- Convenience Functions ---

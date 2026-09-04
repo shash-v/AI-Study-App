@@ -44,6 +44,13 @@ def get_all_documents():
     return {"documents": documents}
 
 
+@router.delete("/documents/{document_id}")
+def delete_document(document_id: str):
+    if not pipeline.delete_document(document_id):
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"message": "Document deleted successfully"}
+
+
 @router.post("/upload")
 async def upload_document(files: UploadFile = File(...)):
     total_chunks = 0

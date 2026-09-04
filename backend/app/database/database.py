@@ -142,6 +142,7 @@ class EmbeddingStore:
         source = self._next_available_source(str(metadata.get("source", "")))
         metadata = {**metadata, "source": source}
         document_id = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        metadata["document_id"] = document_id
         document_metadata = {key: str(value) for key, value in metadata.items()}
 
         if self._documents_collection is not None:
@@ -165,6 +166,45 @@ class EmbeddingStore:
                 existing["metadata"] = document_metadata
 
         return metadata
+
+    def delete_document(self, document_id: str) -> dict[str, Any] | None:
+        """Delete a document record and every chunk belonging to its source."""
+        document = self._get_registered_document(document_id)
+        if document is None:
+            return None
+
+        metadata = document.get("metadata", {})
+        source = metadata.get("source", "")
+        if self._collection is not None:
+            if source:
+                self._collection.delete(where={"source": source})
+            self._collection.delete(where={"document_id": document_id})
+        self._items = [
+            item
+            for item in self._items
+            if item["metadata"].get("source") != source
+            and item["metadata"].get("document_id") != document_id
+        ]
+
+        if self._documents_collection is not None:
+            self._documents_collection.delete(ids=[document_id])
+        self._documents = [item for item in self._documents if item["id"] != document_id]
+        return document
+
+    def _get_registered_document(self, document_id: str) -> dict[str, Any] | None:
+        if self._documents_collection is not None:
+            result = self._documents_collection.get(
+                ids=[document_id],
+                include=["documents", "metadatas"],
+            )
+            if not result.get("ids"):
+                return None
+            return {
+                "id": result["ids"][0],
+                "text": result.get("documents", [""])[0],
+                "metadata": (result.get("metadatas") or [{}])[0] or {},
+            }
+        return next((item for item in self._documents if item["id"] == document_id), None)
 
     def _next_available_source(self, source: str) -> str:
         """Return source with a numeric suffix when its filename is already registered."""

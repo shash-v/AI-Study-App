@@ -83,6 +83,28 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
     void loadDocuments()
   }
 
+  const handleDeleteDocument = async (document: DocumentItem) => {
+    if (!window.confirm(`Delete ${document.name}? This cannot be undone.`)) return
+
+    try {
+      setIsLoading(true)
+      const response = await fetch(`${API_BASE_URL}/documents/${document.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete document from backend')
+      }
+
+      setDocuments((prev) => prev.filter((item) => item.id !== document.id))
+    } catch (error) {
+      console.error('Delete failed', error)
+      alert('Error deleting the document from the backend server.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -179,6 +201,7 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
                       <th>File Name</th>
                       <th>Size</th>
                       <th>Date</th>
+                      <th aria-label="Actions"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -187,6 +210,18 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
                         <td className="doc-name">{doc.name}</td>
                         <td className="doc-meta">{doc.size}</td>
                         <td className="doc-meta">{doc.uploadedAt}</td>
+                        <td className="doc-action-cell">
+                          <button
+                            type="button"
+                            className="delete-document-btn"
+                            aria-label={`Delete ${doc.name}`}
+                            title={`Delete ${doc.name}`}
+                            onClick={() => void handleDeleteDocument(doc)}
+                            disabled={isLoading}
+                          >
+                            🗑
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
