@@ -4,6 +4,8 @@ from typing import Any, Dict
 import numpy as np
 from PIL import Image
 
+from app.observability.tracing import traced
+
 try:
     from rapidocr_onnxruntime import RapidOCR
 except ImportError:
@@ -13,6 +15,7 @@ except ImportError:
 _engine = RapidOCR() if RapidOCR is not None else None
 
 
+@traced("ocr.extract_text_from_image")
 def extract_text_from_image(
     url: str,
     crop_top_pct: float = 0.12,  # Removes browser tabs / PDF toolbar

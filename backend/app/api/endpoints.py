@@ -10,6 +10,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.services.pipeline import StudyPipeline
+from app.observability.tracing import traced
 
 router = APIRouter()
 pipeline = StudyPipeline()
@@ -19,6 +20,25 @@ logger = logging.getLogger("uvicorn.error")
 class SearchRequest(BaseModel):
     query: str
     k: int = 5
+
+
+@traced("screen.analyze")
+def analyze_screen_file(file_path: str) -> dict:
+    """Run OCR and retrieval for a temporary screenshot without tracing its contents."""
+    from app.services.ocr.ocr import extract_text_from_image
+
+    ocr_result = extract_text_from_image(file_path, crop_top_pct=0)
+    text = ocr_result.get("text", "")
+    documents = pipeline.retrieve(text) if text else []
+
+    return {
+        "text": text,
+        "regions": ocr_result.get("regions", []),
+        "matches": [
+            {"text": document.page_content, "metadata": document.metadata}
+            for document in documents
+        ],
+    }
 
 
 @router.get("/")
@@ -44,26 +64,13 @@ def search_documents(request: SearchRequest):
 
 @router.post("/analyze-screen")
 async def analyze_screen(image: UploadFile = File(...)):
-    from app.services.ocr.ocr import extract_text_from_image
-
     temp_path = ""
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
             shutil.copyfileobj(image.file, temp_file)
             temp_path = temp_file.name
 
-        ocr_result = extract_text_from_image(temp_path, crop_top_pct=0)
-        text = ocr_result.get("text", "")
-        documents = pipeline.retrieve(text) if text else []
-
-        return {
-            "text": text,
-            "regions": ocr_result.get("regions", []),
-            "matches": [
-                {"text": document.page_content, "metadata": document.metadata}
-                for document in documents
-            ],
-        }
+        return analyze_screen_file(temp_path)
     except Exception as exc:
         logger.error("Error in /analyze-screen:\n%s", traceback.format_exc())
         raise HTTPException(

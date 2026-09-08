@@ -2,11 +2,13 @@ import os
 
 from google import genai
 from dotenv import load_dotenv
+from app.observability.tracing import traced
 
 load_dotenv()
 model = "gemini-3.1-flash-lite"
 
 
+@traced("llm.gemini_query")
 def llm_query(question: str, context: str) -> str:
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:

@@ -14,6 +14,7 @@ from app.services.ingestion import (
     extract_text_from_pdf,
     extract_text_from_pptx,
 )
+from app.observability.tracing import traced
 
 
 class VectorStoreManager:
@@ -63,6 +64,7 @@ class VectorStoreManager:
             search_kwargs=kwargs,
         )
 
+    @traced("vector_store.add_documents")
     def add_documents(self, documents: Sequence[Document]) -> None:
         if not documents:
             return
@@ -94,6 +96,7 @@ class VectorStoreManager:
         self.persist_directory.mkdir(parents=True, exist_ok=True)
         self.vectorstore.save_local(str(self.persist_directory))
 
+    @traced("vector_store.delete_by_document")
     def delete_by_document(self, document_id: str, source: str) -> None:
         if self.vectorstore is None:
             return
@@ -127,6 +130,7 @@ class StudyPipeline:
         self.retriever = retriever or VectorStoreManager()
         self.embedding_store = embedding_store or EmbeddingStore()
 
+    @traced("study_pipeline.ingest_text")
     def ingest_text(
         self,
         text: str,
@@ -142,6 +146,7 @@ class StudyPipeline:
         self.embedding_store.add_texts(chunks, metadatas=chunk_metadata)
         return len(chunks)
 
+    @traced("study_pipeline.ingest_file")
     def ingest_file(
         self,
         file_path: str,
@@ -170,6 +175,7 @@ class StudyPipeline:
 
         return self.ingest_text(text, metadata=metadata)
 
+    @traced("study_pipeline.retrieve")
     def retrieve(self, question: str) -> list[Document]:
         if self.retriever.vectorstore is None:
             return []
@@ -178,9 +184,11 @@ class StudyPipeline:
             k=self.retriever.k,
         )
 
+    @traced("study_pipeline.list_documents")
     def list_documents(self) -> list[dict[str, Any]]:
         return self.embedding_store.list_documents()
 
+    @traced("study_pipeline.delete_document")
     def delete_document(self, document_id: str) -> bool:
         document = self.embedding_store.delete_document(document_id)
         if document is None:
