@@ -24,3 +24,6 @@ log = "0.4"
 tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-global-shortcut = "2.3.2"
+base64 = "0.22"
+image = "0.25"
+xcap = "0.7"

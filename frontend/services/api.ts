@@ -10,6 +10,16 @@ export interface SearchResponse {
   results: SearchResult[]
 }
 
+export interface ScreenAnalysisResponse {
+  text: string
+  regions: Array<{
+    text: string
+    confidence: number
+    bbox: number[][]
+  }>
+  matches: SearchResult[]
+}
+
 export const checkHealth = async () => {
   const response = await fetch(`${API_BASE_URL}/health`)
   if (!response.ok) throw new Error("Health check failed")
@@ -26,6 +36,20 @@ export const searchDocuments = async (query: string, k: number = 5): Promise<Sea
   })
 
   if (!response.ok) throw new Error("Search request failed")
+  return response.json()
+}
+
+export const analyzeScreen = async (imageDataUrl: string): Promise<ScreenAnalysisResponse> => {
+  const image = await fetch(imageDataUrl).then((response) => response.blob())
+  const formData = new FormData()
+  formData.append('image', image, 'screen.png')
+
+  const response = await fetch(`${API_BASE_URL}/analyze-screen`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) throw new Error('Screen analysis failed')
   return response.json()
 }
 

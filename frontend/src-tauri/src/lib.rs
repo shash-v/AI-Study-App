@@ -2,6 +2,35 @@ use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, Emitter};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use std::thread;
 use std::time::Duration;
+use std::io::Cursor;
+use base64::Engine;
+use image::ImageFormat;
+use serde::Serialize;
+use xcap::Monitor;
+
+#[derive(Serialize)]
+struct CapturedScreen {
+    data_url: String,
+}
+
+#[tauri::command]
+fn capture_screen() -> Result<CapturedScreen, String> {
+    let monitor = Monitor::all()
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .next()
+        .ok_or_else(|| "No display monitor was found".to_string())?;
+    let image = monitor.capture_image().map_err(|error| error.to_string())?;
+    let mut png = Cursor::new(Vec::new());
+    image::DynamicImage::ImageRgba8(image)
+        .write_to(&mut png, ImageFormat::Png)
+        .map_err(|error| error.to_string())?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(png.into_inner());
+
+    Ok(CapturedScreen {
+        data_url: format!("data:image/png;base64,{encoded}"),
+    })
+}
 
 fn toggle_panel(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -87,6 +116,7 @@ fn toggle_panel(app: &AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![capture_screen])
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 if let Ok(Some(monitor)) = window.current_monitor() {

@@ -49,12 +49,19 @@ def extract_text_from_image(
     results, _ = _engine(img_np)
 
     extracted_lines = []
+    regions = []
     if results:
         for item in results:
+            bbox = item[0]
             text = item[1].strip()
             score = float(item[2])
             if score >= 0.40 and text:
                 extracted_lines.append(text)
+                regions.append({
+                    "text": text,
+                    "confidence": score,
+                    "bbox": [[float(point[0]), float(point[1])] for point in bbox],
+                })
 
     extracted_text = "\n".join(extracted_lines).strip()
 
@@ -63,11 +70,10 @@ def extract_text_from_image(
         "height": height,
         "mode": img_mode,
     }
-    print(f"Extracted_text:\n{extracted_text}")
-
     return {
         "source": url,
         "text": extracted_text,
+        "regions": regions,
         "features": features,
         "message": "OCR text and image features extracted",
     }

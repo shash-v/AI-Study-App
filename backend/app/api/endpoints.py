@@ -1,15 +1,19 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException
-from pydantic import BaseModel
-from typing import List
-import shutil
-from pathlib import Path
-import tempfile
 from datetime import datetime, timezone
+import logging
+from pathlib import Path
+import shutil
+import tempfile
+import traceback
+from typing import List
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from app.services.pipeline import StudyPipeline
 
 router = APIRouter()
 pipeline = StudyPipeline()
+logger = logging.getLogger("uvicorn.error")
 
 
 class SearchRequest(BaseModel):
@@ -38,7 +42,38 @@ def search_documents(request: SearchRequest):
         ],
     }
 
-@router.get("/all-documents") 
+@router.post("/analyze-screen")
+async def analyze_screen(image: UploadFile = File(...)):
+    from app.services.ocr.ocr import extract_text_from_image
+
+    temp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+            shutil.copyfileobj(image.file, temp_file)
+            temp_path = temp_file.name
+
+        ocr_result = extract_text_from_image(temp_path, crop_top_pct=0)
+        text = ocr_result.get("text", "")
+        documents = pipeline.retrieve(text) if text else []
+
+        return {
+            "text": text,
+            "regions": ocr_result.get("regions", []),
+            "matches": [
+                {"text": document.page_content, "metadata": document.metadata}
+                for document in documents
+            ],
+        }
+    except Exception as exc:
+        logger.error("Error in /analyze-screen:\n%s", traceback.format_exc())
+        raise HTTPException(
+            status_code=500, detail=f"Screen analysis failed: {exc}"
+        ) from exc
+    finally:
+        if temp_path:
+            Path(temp_path).unlink(missing_ok=True)
+
+@router.get("/all-documents")
 def get_all_documents():
     documents = pipeline.list_documents()
     return {"documents": documents}
@@ -55,17 +90,15 @@ def delete_document(document_id: str):
 async def upload_document(files: UploadFile = File(...)):
     total_chunks = 0
     try:
-        # for file in files:
-        file = files
-        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as temp_file:
-            shutil.copyfileobj(file.file, temp_file)
+        suffix = Path(files.filename).suffix if files.filename else ""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            shutil.copyfileobj(files.file, temp_file)
             temp_path = temp_file.name
 
         try:
-            # Passes original filename so your metadata stays clean
             chunks_added = pipeline.ingest_file(
                 temp_path,
-                original_filename=file.filename,
+                original_filename=files.filename,
                 size_bytes=Path(temp_path).stat().st_size,
                 uploaded_at=datetime.now(timezone.utc).isoformat(),
             )
@@ -74,11 +107,9 @@ async def upload_document(files: UploadFile = File(...)):
             Path(temp_path).unlink(missing_ok=True)
 
         return {
-            "message": f"Successfully uploaded and indexed  file(s).",## {len(files)}
-            "total_chunks_added": total_chunks
+            "message": "Successfully uploaded and indexed file.",
+            "total_chunks_added": total_chunks,
         }
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        print(error_detail)  # Force print to console
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Error in /upload:\n%s", traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e)) from e

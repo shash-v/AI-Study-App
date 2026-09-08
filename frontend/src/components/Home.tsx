@@ -5,12 +5,14 @@ import { ToggleModeButton } from './ToggleModeButton'
 
 interface HomeProps {
   onLaunch: () => void
+  onOpenStudyLens: () => void
   onOpenPomodoro?: () => void
   onOpenUploadPage: () => void
 }
 
 export const Home: React.FC<HomeProps> = ({ 
   onLaunch, 
+  onOpenStudyLens,
   onOpenPomodoro, 
   onOpenUploadPage 
 }) => {
@@ -62,6 +64,10 @@ export const Home: React.FC<HomeProps> = ({
         <div className="landing-actions">
           <button type="button" className="glossy-button" onClick={onLaunch}>
             AI Assistant
+          </button>
+
+          <button type="button" className="glossy-button upload-btn" onClick={onOpenStudyLens}>
+            Study Lens
           </button>
 
           <button 
