@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { analyzeScreen } from '../../services/api'
 import type { ScreenAnalysisResponse } from '../../services/api'
@@ -14,68 +14,48 @@ interface CapturedScreen {
 }
 
 export const StudyLens: React.FC<StudyLensProps> = ({ onBack }) => {
-    const [status, setStatus] = useState('Capturing your screen...')
     const [result, setResult] = useState<ScreenAnalysisResponse | null>(null)
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
-    const isMounted = useRef(true)
-
-    useEffect(() => {
-        isMounted.current = true
-        return () => {
-            isMounted.current = false
-        }
-    }, [])
-
     const captureAndAnalyze = useCallback(async () => {
         if (isLoading) return
         setIsLoading(true)
         setError('')
         setResult(null)
-        setStatus('Capturing your screen...')
 
         try {
-            // Optional: Hide window briefly if app should not capture itself
-            // await invoke('hide_main_window')
-            
             const capture = await invoke<CapturedScreen>('capture_screen')
-            
-            if (!isMounted.current) return
-            setStatus('Sending screenshot to backend...')
-            
             const analysis = await analyzeScreen(capture.data_url)
-            
-            if (!isMounted.current) return
             setResult(analysis)
-            setStatus('Screen analyzed')
         } catch (captureError) {
-            if (!isMounted.current) return
             setError(captureError instanceof Error ? captureError.message : 'Unable to capture screen.')
-            setStatus('Capture failed')
         } finally {
-            if (isMounted.current) setIsLoading(false)
+            setIsLoading(false)
         }
     }, [isLoading])
 
-    useEffect(() => {
-        void captureAndAnalyze()
-    }, [])
-
     return (
-        <div className="panel" style={{ padding: 24, boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel study-lens-panel">
+            <div className="study-lens-header">
                 <BackButton onBack={onBack} />
                 <ToggleModeButton />
             </div>
 
-            <main style={{ maxWidth: 720, width: '100%', margin: '48px auto 0' }}>
-                <p style={{ color: '#fbbf24', letterSpacing: '0.12em', fontSize: 12 }}>STUDY LENS</p>
-                <h1 style={{ margin: '8px 0', color: '#fff', fontWeight: 500 }}>Reading your current screen</h1>
-                <p style={{ color: 'rgba(255,255,255,0.6)' }}>{status}</p>
+            <main className="study-lens-content">
+                <section className="study-lens-empty-state">
+                    <button
+                        type="button"
+                        className="study-lens-capture-button"
+                        disabled={isLoading}
+                        onClick={() => void captureAndAnalyze()}
+                    >
+                        {isLoading ? 'Reading...' : 'Scan screen'}
+                    </button>
+                </section>
 
                 {error && (
-                    <div style={{ marginTop: 24, padding: 16, border: '1px solid rgba(248,113,113,0.4)', borderRadius: 10, color: '#fecaca' }}>
-                        <p style={{ marginTop: 0 }}>{error}</p>
+                    <div className="study-lens-error">
+                        <p>{error}</p>
                         <button type="button" disabled={isLoading} onClick={() => void captureAndAnalyze()}>
                             {isLoading ? 'Retrying...' : 'Try again'}
                         </button>
@@ -83,17 +63,35 @@ export const StudyLens: React.FC<StudyLensProps> = ({ onBack }) => {
                 )}
 
                 {result && (
-                    <section style={{ marginTop: 24, padding: 18, border: '1px solid rgba(255,255,255,0.16)', borderRadius: 12, color: '#fff' }}>
-                        <h2 style={{ marginTop: 0, fontWeight: 500 }}>Detected text</h2>
-                        <p style={{ whiteSpace: 'pre-wrap', color: 'rgba(255,255,255,0.78)' }}>{result.text || 'No text detected.'}</p>
-                        <h2 style={{ fontWeight: 500 }}>Related uploaded material</h2>
+                    <section className="study-lens-result">
+                        <div className="study-lens-result-heading">
+                            <div>
+                                <p className="study-lens-kicker">STUDY SIGNAL</p>
+                                <h2>What stood out</h2>
+                            </div>
+                            <div className="study-lens-result-stats">
+                                <span>{result.regions.length} text areas</span>
+                                <span>{result.matches.length} matches</span>
+                            </div>
+                        </div>
+                        <div className="study-lens-detected-text">
+                            <span>Detected on screen</span>
+                            <p>{result.text || 'No text detected.'}</p>
+                        </div>
+                        <div className="study-lens-evidence-heading">
+                            <h2 className="study-lens-section-title">Past-paper connections</h2>
+                            <span>Uploaded evidence</span>
+                        </div>
                         {result.matches.length === 0 ? (
-                            <p style={{ color: 'rgba(255,255,255,0.55)' }}>No matching past-paper material found.</p>
+                            <p className="study-lens-muted">No related questions found yet.</p>
                         ) : (
                             result.matches.map((match, index) => (
-                                <article key={`${match.metadata?.source ?? 'match'}-${index}`} style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <strong>{String(match.metadata?.source ?? 'Uploaded document')}</strong>
-                                    <p style={{ color: 'rgba(255,255,255,0.68)' }}>{match.text}</p>
+                                <article className="study-lens-match" key={`${match.metadata?.source ?? 'match'}-${index}`}>
+                                    <span className="study-lens-match-number">{String(index + 1).padStart(2, '0')}</span>
+                                    <div>
+                                        <strong>{String(match.metadata?.source ?? 'Uploaded document')}</strong>
+                                        <p>{match.text}</p>
+                                    </div>
                                 </article>
                             ))
                         )}

@@ -1,0 +1,337 @@
+.study-lens-panel {
+  position: relative;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.9);
+  background:
+    radial-gradient(circle at 18% 18%, var(--accent-bg, rgba(170, 59, 255, 0.1)), transparent 28%),
+    radial-gradient(circle at 85% 80%, rgba(56, 189, 248, 0.06), transparent 32%),
+    rgba(20, 20, 20, 0.98);
+}
+
+.study-lens-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+}
+
+.study-lens-content {
+  width: min(100% - 48px, 760px);
+  margin: 0 auto;
+  padding: 34px 0 30px;
+  box-sizing: border-box;
+}
+
+.study-lens-hero {
+  max-width: 600px;
+  margin-bottom: 28px;
+}
+
+.study-lens-kicker {
+  margin: 0 0 9px;
+  color: var(--accent, #aa3bff);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.study-lens-hero h1 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: clamp(1.9rem, 5vw, 3.4rem);
+  font-weight: 500;
+  line-height: 1.03;
+}
+
+.study-lens-hero > p {
+  max-width: 490px;
+  margin: 15px 0 0;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.study-lens-capture-card,
+.study-lens-result,
+.study-lens-error {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 16px;
+  background: rgba(30, 30, 30, 0.62);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.study-lens-capture-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+}
+
+.study-lens-orb {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--accent-border, rgba(170, 59, 255, 0.5));
+  border-radius: 50%;
+  background: var(--accent-bg, rgba(170, 59, 255, 0.1));
+}
+
+.study-lens-orb span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent, #aa3bff);
+  box-shadow: 0 0 22px var(--accent-border, rgba(170, 59, 255, 0.5));
+}
+
+.study-lens-orb.is-active span {
+  animation: study-lens-pulse 1s ease-in-out infinite;
+}
+
+@keyframes study-lens-pulse {
+  50% { opacity: 0.35; transform: scale(0.62); }
+}
+
+.study-lens-status {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+}
+
+.study-lens-capture-copy h2 {
+  margin: 4px 0 5px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.study-lens-capture-copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.study-lens-capture-button,
+.study-lens-error button {
+  border: 2px solid var(--accent-border, rgba(170, 59, 255, 0.5));
+  border-radius: 9999px;
+  padding: 10px 20px;
+  color: var(--accent, #aa3bff);
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+}
+
+.study-lens-capture-button:hover:not(:disabled),
+.study-lens-error button:hover:not(:disabled) {
+  background: rgba(24, 24, 27, 0.6);
+  border-color: var(--accent, #aa3bff);
+  transform: translateY(-1px);
+}
+
+.study-lens-capture-button:disabled,
+.study-lens-error button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.study-lens-error {
+  margin-top: 18px;
+  padding: 15px;
+  border-color: rgba(248, 113, 113, 0.34);
+  color: #fecaca;
+}
+
+.study-lens-error p {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+}
+
+.study-lens-error button {
+  padding: 8px 12px;
+  color: #fff;
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.study-lens-result {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 22px;
+  padding: 22px;
+  animation: study-lens-reveal 280ms ease both;
+}
+
+@keyframes study-lens-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.study-lens-result-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.study-lens-result-heading h2,
+.study-lens-section-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.study-lens-result-heading > span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--accent, #aa3bff);
+  background: var(--accent-bg, rgba(170, 59, 255, 0.1));
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.study-lens-result-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.study-lens-result-stats span,
+.study-lens-evidence-heading > span {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.68rem;
+}
+
+.study-lens-result-stats span {
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.study-lens-detected-text {
+  margin: 18px 0 22px;
+  padding: 14px;
+  border-left: 2px solid var(--accent, #aa3bff);
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.study-lens-detected-text span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent, #aa3bff);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.study-lens-detected-text p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.study-lens-section-title {
+  margin: 0;
+}
+
+.study-lens-evidence-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.study-lens-muted {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
+}
+
+.study-lens-match {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.study-lens-match-number {
+  color: var(--accent, #aa3bff);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.study-lens-match strong {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.78rem;
+}
+
+.study-lens-match p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 460px) {
+  .study-lens-result { padding: 16px; }
+  .study-lens-result-heading { flex-direction: column; }
+  .study-lens-result-stats { justify-content: flex-start; }
+  .study-lens-evidence-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+}
+
+@media (max-width: 600px) {
+  .study-lens-header { padding: 18px 16px; }
+  .study-lens-content { width: calc(100% - 32px); padding-top: 22px; }
+  .study-lens-capture-card { grid-template-columns: auto 1fr; }
+  .study-lens-capture-button { grid-column: 1 / -1; width: 100%; }
+}
+
+/* Keep the lens closer to the compact assistant surface. */
+.study-lens-panel {
+  background: rgba(20, 20, 20, 0.98);
+}
+
+.study-lens-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: min(100% - 40px, 680px);
+  padding: 20px 0 40px;
+}
+
+.study-lens-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  text-align: center;
+}
+
+.study-lens-empty-state .study-lens-capture-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 174px;
+  justify-content: center;
+  padding: 13px 22px;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.28),
+    0 0 28px var(--accent-bg, rgba(170, 59, 255, 0.12));
+}
