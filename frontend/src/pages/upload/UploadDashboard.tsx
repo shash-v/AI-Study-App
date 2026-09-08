@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { BackButton } from './BackButton'
-import { ToggleModeButton } from './ToggleModeButton'
+import { BackButton } from '../../components/navigation/BackButton'
+import { ToggleModeButton } from '../../components/navigation/ToggleModeButton'
+import './upload.css'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface UploadDashboardProps {
@@ -144,19 +145,8 @@ export const UploadDashboard: React.FC<UploadDashboardProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="panel chat-panel upload-panel-root" style={{ position: 'relative' }}>
-      <div 
-        className="upload-header"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          padding: '24px 24px 0',
-          boxSizing: 'border-box',
-          position: 'relative',
-        }}
-      >
+    <div className="panel chat-panel upload-panel-root">
+      <div className="upload-header">
         <BackButton onBack={onBack} />
         <ToggleModeButton />
       </div>

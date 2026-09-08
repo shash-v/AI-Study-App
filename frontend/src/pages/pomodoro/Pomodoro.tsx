@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { BackButton } from './BackButton'
+import { BackButton } from '../../components/navigation/BackButton'
 import { SettingsModal } from './SettingsModal'
 import { SleepModeWrapper } from './SleepModeWrapper'
+import './pomodoro.css'
 
 interface PomodoroProps {
   onBack: () => void
@@ -154,7 +155,7 @@ export const Pomodoro: React.FC<PomodoroProps> = ({ onBack }) => {
 
   return (
     <SleepModeWrapper isSleepMode={isSleepMode} onWakeUp={() => setIsSleepMode(false)}>
-      <div className="panel chat-panel" style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div className="panel chat-panel pomodoro-page">
         {/* Header Container (Hidden in Sleep Mode) */}
         {!isSleepMode && (
           <div

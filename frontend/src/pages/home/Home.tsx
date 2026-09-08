@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { MathOrb } from './MathOrb'
-import { checkHealth } from '../../services/api'
-import { ToggleModeButton } from './ToggleModeButton'
+import { checkHealth } from '../../../services/api'
+import { ToggleModeButton } from '../../components/navigation/ToggleModeButton'
+import './home.css'
 
 interface HomeProps {
   onLaunch: () => void
@@ -33,25 +34,18 @@ export const Home: React.FC<HomeProps> = ({
   }
 
   return (
-    <div className="panel" ref={containerRef} style={{ position: 'relative' }}>
+    <div className="panel home-page" ref={containerRef}>
       <ToggleModeButton />
 
       <MathOrb containerRef={containerRef} />
 
-      <section id="center" style={{ position: 'relative', zIndex: 1 }}>
+      <section id="center" className="home-center">
         <div>
           <h1>
             <span 
               onClick={handleDoXClick}
               title="Click to test backend API"
-              style={{
-                cursor: 'pointer',
-                background: isDoXHovered ? 'linear-gradient(135deg, #38bdf8, #c084fc)' : 'none',
-                WebkitBackgroundClip: isDoXHovered ? 'text' : 'initial',
-                WebkitTextFillColor: isDoXHovered ? 'transparent' : 'inherit',
-                color: isDoXHovered ? 'transparent' : 'inherit',
-                transition: 'all 0.2s ease',
-              }}
+              className={isDoXHovered ? 'dox-mark is-hovered' : 'dox-mark'}
               onMouseEnter={() => setIsDoXHovered(true)}
               onMouseLeave={() => setIsDoXHovered(false)}
             >

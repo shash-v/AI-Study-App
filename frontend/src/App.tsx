@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Home } from './components/Home'
-import { ChatDashboard } from './components/ChatDashboard'
-import { Pomodoro } from './components/Pomodoro'
-import { UploadDashboard } from './components/UploadDashboard'
-import { StudyLens } from './components/StudyLens'
-import './App.css'
+import { Home } from './pages/home/Home'
+import { ChatDashboard } from './pages/chat/ChatDashboard'
+import { Pomodoro } from './pages/pomodoro/Pomodoro'
+import { UploadDashboard } from './pages/upload/UploadDashboard'
+import { StudyLens } from './pages/study-lens/StudyLens'
 
 type CurrentView = 'home' | 'dashboard' | 'pomodoro' | 'upload' | 'study-lens'
 

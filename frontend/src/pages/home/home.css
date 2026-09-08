@@ -1,3 +1,24 @@
+.home-page {
+  position: relative;
+}
+
+.home-center {
+  position: relative;
+  z-index: 1;
+}
+
+.dox-mark {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dox-mark.is-hovered {
+  color: transparent;
+  background: linear-gradient(135deg, #38bdf8, #c084fc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .landing-actions {
   display: flex;
   flex-direction: column;

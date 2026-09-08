@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { analyzeScreen } from '../../services/api'
-import type { ScreenAnalysisResponse } from '../../services/api'
-import { BackButton } from './BackButton'
-import { ToggleModeButton } from './ToggleModeButton'
+import { analyzeScreen } from '../../../services/api'
+import type { ScreenAnalysisResponse } from '../../../services/api'
+import { BackButton } from '../../components/navigation/BackButton'
+import { ToggleModeButton } from '../../components/navigation/ToggleModeButton'
+import './study-lens.css'
 
 interface StudyLensProps {
     onBack: () => void

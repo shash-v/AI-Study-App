@@ -1,5 +1,5 @@
 import React from 'react'
-import { BackButton } from './BackButton'
+import { BackButton } from '../../components/navigation/BackButton'
 
 interface PomodoroHeaderProps {
   onBack: () => void

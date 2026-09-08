@@ -4,6 +4,23 @@
   justify-content: space-between;
 }
 
+.chat-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 24px 24px 0;
+  box-sizing: border-box;
+}
+
 /* Header Bar */
 .panel-header {
   padding: 24px 32px 0;
@@ -33,6 +50,16 @@
   color: var(--text-h, rgba(255, 255, 255, 0.85));
   margin: 0;
 }
+
+@keyframes rollInCard {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.empty-state-heading { animation: rollInCard 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animated-pill-1 { animation: rollInCard 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.animated-pill-2 { animation: rollInCard 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+.animated-pill-3 { animation: rollInCard 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
 
 .pills-wrapper {
   display: flex;
@@ -88,6 +115,9 @@
   border-radius: 18px;
   font-size: 0.95rem;
   line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
 .chat-message.user {
@@ -210,3 +240,61 @@
   align-items: center;
   justify-content: flex-end;
 }
+
+.chat-ovular-input-card {
+  max-width: 920px;
+  margin: 0 auto;
+  background: rgba(30, 30, 30, 0.7);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 24px;
+  padding: 8px 12px 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.chat-ovular-input-card:focus-within {
+  border-color: var(--accent, rgba(244, 114, 182, 0.6));
+  background: rgba(35, 35, 40, 0.85);
+}
+
+.chat-ovular-input-card textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  resize: none;
+  line-height: 20px;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  border: none;
+  background: transparent;
+  outline: none;
+  margin: 0;
+  cursor: text;
+}
+
+.chat-ovular-input-card textarea::-webkit-scrollbar { display: none; }
+.chat-ovular-input-card textarea::placeholder { color: rgba(255, 255, 255, 0.4); opacity: 1; }
+
+.chat-glossy-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(24, 24, 27, 0.6);
+  color: var(--accent);
+  border: 2px solid var(--accent-border, rgba(244, 114, 182, 0.4));
+  transition: border-color 0.3s, background 0.3s, transform 0.2s, opacity 0.3s;
+}
+
+.chat-glossy-send-btn:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.chat-glossy-send-btn:disabled { opacity: 0.4; cursor: pointer; transform: none; }
