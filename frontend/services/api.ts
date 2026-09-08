@@ -10,6 +10,17 @@ export interface SearchResponse {
   results: SearchResult[]
 }
 
+export interface ChatResponse {
+  answer: string
+  rag: boolean
+  sources: SearchResult[]
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface ScreenAnalysisResponse {
   text: string
   regions: Array<{
@@ -36,6 +47,25 @@ export const searchDocuments = async (query: string, k: number = 5): Promise<Sea
   })
 
   if (!response.ok) throw new Error("Search request failed")
+  return response.json()
+}
+
+export const chat = async (
+  message: string,
+  rag: boolean,
+  k: number = 5,
+  history: ChatTurn[] = [],
+): Promise<ChatResponse> => {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, rag, k, history }),
+  })
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(detail || 'Chat request failed')
+  }
   return response.json()
 }
 

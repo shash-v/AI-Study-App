@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import logging
+import re
 from pathlib import Path
 import shutil
 import tempfile
@@ -7,10 +8,11 @@ import traceback
 from typing import List
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.services.pipeline import StudyPipeline
 from app.observability.tracing import traced
+from app.services.llm.llm import llm_query
 
 router = APIRouter()
 pipeline = StudyPipeline()
@@ -20,6 +22,25 @@ logger = logging.getLogger("uvicorn.error")
 class SearchRequest(BaseModel):
     query: str
     k: int = 5
+
+
+class ChatRequest(BaseModel):
+    message: str
+    rag: bool = False
+    k: int = 5
+    history: list[dict[str, str]] = Field(default_factory=list)
+
+
+def normalize_chat_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
+    return [
+        {
+            "role": turn["role"],
+            "content": turn["content"].strip(),
+        }
+        for turn in history[-12:]
+        if turn.get("role") in {"user", "assistant"}
+        and turn.get("content", "").strip()
+    ]
 
 
 @traced("screen.analyze")
@@ -59,6 +80,46 @@ def search_documents(request: SearchRequest):
         "results": [
             {"text": document.page_content, "metadata": document.metadata}
             for document in documents[: request.k]
+        ],
+    }
+
+
+@router.post("/chat")
+@traced("chat.answer")
+def chat(request: ChatRequest):
+    message = request.message.strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    if request.k < 1 or request.k > 20:
+        raise HTTPException(status_code=400, detail="k must be between 1 and 20")
+
+    history = normalize_chat_history(request.history)
+    recent_context = "\n".join(
+        f"{turn['role']}: {turn['content']}"
+        for turn in history[-6:]
+    )
+    retrieval_query = f"{recent_context}\nuser: {message}" if recent_context else message
+    is_conversation_edit = bool(
+        history and re.search(
+            r"\b(rewrite|rephrase|shorten|shorter|concise|simplify|summarize|expand|elaborate|last answer|last question|previous answer|previous question|that answer|that)\b",
+            message.lower(),
+        )
+    )
+    documents = (
+        pipeline.retrieve(retrieval_query)[: request.k]
+        if request.rag and not is_conversation_edit
+        else []
+    )
+    used_rag = bool(request.rag and documents)
+    context = "\n\n---\n\n".join(document.page_content for document in documents)
+    answer = llm_query(message, context=context, grounded=used_rag, history=history)
+
+    return {
+        "answer": answer,
+        "rag": used_rag,
+        "sources": [
+            {"text": document.page_content, "metadata": document.metadata}
+            for document in documents
         ],
     }
 

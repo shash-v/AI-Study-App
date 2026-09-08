@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { chat } from '../../services/api'
+import type { ChatTurn, SearchResult } from '../../services/api'
 import { BackButton } from './BackButton'
 import { ToggleModeButton } from './ToggleModeButton'
 
@@ -6,9 +8,51 @@ interface ChatDashboardProps {
   onBack: () => void
 }
 
+interface ChatMessage {
+  sender: 'user' | 'ai'
+  text: string
+  rag?: boolean
+  sources?: SearchResult[]
+}
+
+const CHAT_HISTORY_KEY = 'study-assistant-chat-history'
+
+const renderInlineMarkdown = (text: string): React.ReactNode[] => {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g)
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={index}>{part.slice(1, -1)}</em>
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>
+  })
+}
+
+const AssistantMessage: React.FC<{ text: string }> = ({ text }) => {
+  const normalizedText = text.replace(/\s+\*\s+(?=\*\*)/g, '\n• ')
+  return (
+    <div className="assistant-markdown">
+      {normalizedText.split('\n').map((line, index) => (
+        <div key={index}>{renderInlineMarkdown(line)}</div>
+      ))}
+    </div>
+  )
+}
+
 export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
-  const [messages, setMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string }>>([])
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_HISTORY_KEY)
+      return saved ? JSON.parse(saved) as ChatMessage[] : []
+    } catch {
+      return []
+    }
+  })
   const [input, setInput] = useState('')
+  const [isRagEnabled, setIsRagEnabled] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -36,6 +80,10 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages.slice(-12)))
+  }, [messages])
+
   // Automatically grow and scroll textarea up to a max height
   useEffect(() => {
     const textarea = textareaRef.current
@@ -46,21 +94,36 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
     }
   }, [input])
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return
+  const sendMessage = async (text: string) => {
+    const message = text.trim()
+    if (!message || isLoading) return
 
-    setMessages((prev) => [...prev, { sender: 'user', text }])
+    const useRag = isRagEnabled
+    const history: ChatTurn[] = messages.map((item): ChatTurn => ({
+      role: item.sender === 'ai' ? 'assistant' : 'user',
+      content: item.text,
+    })).slice(-12)
+    setMessages((prev) => [...prev, { sender: 'user', text: message }])
     setInput('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
 
-    setTimeout(() => {
+    setIsLoading(true)
+    try {
+      const response = await chat(message, useRag, 5, history)
       setMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: `Here is information about "${text}". How else can I assist?` },
+        { sender: 'ai', text: response.answer, rag: response.rag, sources: response.sources },
       ])
-    }, 800)
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: error instanceof Error ? error.message : 'The assistant could not answer right now.' },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -118,7 +181,7 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
           box-sizing: border-box;
         }
         .chat-ovular-input-card {
-          max-width: 680px;
+          max-width: 920px;
           margin: 0 auto;
           background: rgba(30, 30, 30, 0.7);
           border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
@@ -234,7 +297,12 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
           <div className="chat-thread-container">
             {messages.map((msg, index) => (
               <div key={index} className={`chat-message ${msg.sender}`}>
-                {msg.text}
+                {msg.sender === 'ai' ? <AssistantMessage text={msg.text} /> : <div>{msg.text}</div>}
+                {msg.sender === 'ai' && msg.rag && msg.sources && msg.sources.length > 0 && (
+                  <div className="chat-source-note">
+                    Grounded in {msg.sources.length} uploaded source{msg.sources.length === 1 ? '' : 's'}
+                  </div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -246,12 +314,22 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
 
       {/* Input Form Card pinned at bottom */}
       <section className="input-section">
-        <form 
-          onSubmit={handleFormSubmit} 
-          className="chat-ovular-input-card"
-          onClick={() => textareaRef.current?.focus()}
-          style={{ cursor: 'text' }}
-        >
+        <div className="chat-input-row">
+          <button
+            type="button"
+            className={`rag-toggle ${isRagEnabled ? 'active' : ''}`}
+            aria-pressed={isRagEnabled}
+            onClick={() => setIsRagEnabled((enabled) => !enabled)}
+            title="Ground answers in uploaded study documents"
+          >
+            RAG
+          </button>
+          <form
+            onSubmit={handleFormSubmit}
+            className="chat-ovular-input-card"
+            onClick={() => textareaRef.current?.focus()}
+            style={{ cursor: 'text' }}
+          >
           <textarea
             ref={textareaRef}
             rows={1}
@@ -272,11 +350,11 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
             }}
           />
 
-          <div className="input-card-footer" style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
+          <div className="input-card-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', margin: 0 }}>
             <button 
               type="submit" 
               className="chat-glossy-send-btn" 
-              disabled={!input.trim()}
+              disabled={!input.trim() || isLoading}
               onClick={(e) => e.stopPropagation()}
               style={{
                 width: '34px',
@@ -292,7 +370,8 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
               </svg>
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </section>
     </div>
   )

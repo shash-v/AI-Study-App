@@ -14,9 +14,9 @@
 /* Center Content & Message Thread */
 .chat-center-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 28px;
   box-sizing: border-box;
 }
 
@@ -68,7 +68,8 @@
 /* Dynamic Messages Box */
 .chat-thread-container {
   width: 100%;
-  max-height: 50vh;
+  max-height: 62vh;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -82,7 +83,7 @@
 }
 
 .chat-message {
-  max-width: 80%;
+  max-width: 88%;
   padding: 12px 18px;
   border-radius: 18px;
   font-size: 0.95rem;
@@ -103,6 +104,52 @@
   color: var(--text-h, #ffffff);
 }
 
+.chat-source-note {
+  margin-top: 8px;
+  color: var(--accent, #c084fc);
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.assistant-markdown {
+  white-space: normal;
+}
+
+.assistant-markdown > div + div {
+  margin-top: 5px;
+}
+
+.assistant-markdown strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.assistant-markdown em {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.rag-toggle {
+  min-width: 42px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.48);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.rag-toggle:hover,
+.rag-toggle.active {
+  color: var(--accent, #c084fc);
+  border-color: var(--accent-border, rgba(192, 132, 252, 0.5));
+  background: var(--accent-bg, rgba(192, 132, 252, 0.15));
+}
+
 /* Bottom Input Area */
 .input-section {
   padding: 24px 32px 32px;
@@ -110,8 +157,30 @@
   box-sizing: border-box;
 }
 
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.chat-input-row .chat-ovular-input-card {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .chat-center-container { padding-inline: 16px; }
+  .chat-message { max-width: 94%; }
+  .input-section { padding-inline: 16px; }
+  .chat-input-row { gap: 7px; }
+  .rag-toggle { min-width: 38px; padding-inline: 7px; }
+}
+
 .chat-input-card {
-  max-width: 680px;
+  max-width: 920px;
   margin: 0 auto;
   background: rgba(30, 30, 30, 0.7);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
