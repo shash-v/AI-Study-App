@@ -18,6 +18,25 @@ interface ChatMessage {
 
 const CHAT_HISTORY_KEY = 'study-assistant-chat-history'
 
+const loadMessages = (): ChatMessage[] => {
+  try {
+    const saved = localStorage.getItem(CHAT_HISTORY_KEY)
+    if (!saved) return []
+
+    const parsed = JSON.parse(saved) as ChatMessage[] | {
+      activeChatId?: string
+      chats?: Array<{ id: string; messages: ChatMessage[] }>
+    }
+    if (Array.isArray(parsed)) return parsed
+
+    const activeChat = parsed.chats?.find((chat) => chat.id === parsed.activeChatId)
+    return activeChat?.messages ?? parsed.chats?.[0]?.messages ?? []
+  } catch {
+    // Start with a fresh chat if saved history is invalid.
+  }
+  return []
+}
+
 const renderInlineMarkdown = (text: string): React.ReactNode[] => {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g)
   return parts.map((part, index) => {
@@ -43,14 +62,7 @@ const AssistantMessage: React.FC<{ text: string }> = ({ text }) => {
 }
 
 export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem(CHAT_HISTORY_KEY)
-      return saved ? JSON.parse(saved) as ChatMessage[] : []
-    } catch {
-      return []
-    }
-  })
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages)
   const [input, setInput] = useState('')
   const [isRagEnabled, setIsRagEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -104,7 +116,7 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
       role: item.sender === 'ai' ? 'assistant' : 'user',
       content: item.text,
     })).slice(-12)
-    setMessages((prev) => [...prev, { sender: 'user', text: message }])
+    setMessages((prev) => [...prev, { sender: 'user' as const, text: message }].slice(-12))
     setInput('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -115,16 +127,21 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
       const response = await chat(message, useRag, 5, history)
       setMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: response.answer, rag: response.rag, sources: response.sources },
-      ])
+        { sender: 'ai' as const, text: response.answer, rag: response.rag, sources: response.sources },
+      ].slice(-12))
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: error instanceof Error ? error.message : 'The assistant could not answer right now.' },
-      ])
+        { sender: 'ai' as const, text: error instanceof Error ? error.message : 'The assistant could not answer right now.' },
+      ].slice(-12))
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const clearChat = () => {
+    setMessages([])
+    setInput('')
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -152,6 +169,11 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({ onBack }) => {
       {/* Top Header Container */}
       <div className="chat-header">
         <BackButton onBack={onBack} />
+        <div className="chat-session-controls">
+          <button type="button" className="chat-control-btn danger" onClick={clearChat}>
+            Clear
+          </button>
+        </div>
         <ToggleModeButton />
       </div>
 
